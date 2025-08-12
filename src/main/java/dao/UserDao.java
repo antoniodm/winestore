@@ -11,8 +11,7 @@ public class UserDao {
 
     public UserBean doRetrieveByInfo(String username, String email) {
         try (Connection con = ConPool.getConnection()) {
-            PreparedStatement ps =
-                    con.prepareStatement("SELECT id FROM users WHERE username =? OR email =?");
+            PreparedStatement ps = con.prepareStatement("SELECT id FROM users WHERE username =? OR email =?");
             ps.setString(1, username);
             ps.setString(2, email);
             ResultSet rs = ps.executeQuery();
@@ -29,8 +28,7 @@ public class UserDao {
 
     public UserBean doRetrieveByUsername(String username) {
         try (Connection con = ConPool.getConnection()) {
-            PreparedStatement ps =
-                    con.prepareStatement("SELECT id,email,name, surname, password_hash FROM users WHERE username=?");
+            PreparedStatement ps = con.prepareStatement("SELECT id,email,name, surname, password_hash FROM users WHERE username=?");
             ps.setString(1, username);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {

@@ -15,6 +15,10 @@
     <section id="main">
         <div id="content">
             <h3>INDEX</h3>
+            <% model.UserBean user = (model.UserBean) session.getAttribute("authUser"); %>
+            <% if (user != null)  { %>
+                Ciao <%= user.getName() %> (<%= user.getUsername() %>)
+            <% } %>
         </div>
     </section>
     <aside>
