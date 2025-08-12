@@ -1,0 +1,36 @@
+## Tomcat
+cd /home/anto/Scaricati/apache-tomcat-11.0.9/bin
+./startup.sh 
+
+## Intellij
+/home/anto/Scaricati/idea-IU-251.26927.53
+
+
+
+
+CREATE USER 'admin'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON * . * TO 'admin'@'localhost';
+
+drop table users;
+CREATE TABLE users (
+  id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+  username      VARCHAR(50)  NOT NULL UNIQUE,
+  email         VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(60)  NOT NULL,
+  name          VARCHAR(100) NOT NULL,
+  surname       VARCHAR(100) NOT NULL,
+  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+drop table products;
+CREATE TABLE products (
+  id             BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name     		 VARCHAR(50)  NOT NULL UNIQUE,
+  description    VARCHAR(255) NOT NULL,
+  origin		 VARCHAR(50)  NOT NULL,
+  manufacturer   VARCHAR(50)  NOT NULL,
+  price          INT NOT NULL,
+);
+
+
+ select * from users;
