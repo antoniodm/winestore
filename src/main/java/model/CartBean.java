@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public class CartBean {
-    private String session_token;
     private int id, user_id, status, is_open;
     ArrayList<CartItem> cart_items;
 
