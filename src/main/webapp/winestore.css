@@ -1,0 +1,102 @@
+html, body {
+    height: 100%;    /* abilita l'uso di % in altezza */
+    margin: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column; /* impila header, nav, content, footer */
+    min-height: 100vh;      /* almeno tutta la finestra */
+}
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* banner si espande, login resta a dx */
+    padding: 0 15px;               /* 15px dai bordi schermo */
+}
+
+#banner {
+    flex: 1;                        /* prende tutto lo spazio disponibile */
+    display: flex;                  /* per centrare il contenuto dentro */
+    flex-direction: column;
+    justify-content: center;        /* centratura verticale del testo */
+    align-items: center;            /* centratura orizzontale del testo */
+    text-align: center;
+}
+
+#login {
+    margin-left: 10px;              /* piccolo distacco dal banner */
+}
+
+/* menu orizzontale (ok così) */
+#menu {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+}
+
+.content {
+    display: flex;
+    flex: 1;
+    gap: 10px; /* spazio tra le colonne */
+}
+
+#left_bar {
+    flex: 1; /* colonna piccola */
+    background: #f0f0f0;
+}
+
+#main {
+    flex: 2; /* colonna più grande */
+    background: #e0e0e0;
+}
+
+aside {
+    flex: 1; /* colonna piccola */
+    background: #d0d0d0;
+}
+
+footer {
+    background: #ccc;
+    padding: 10px;
+    text-align: center;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    max-width: 300px;
+    margin: 20px auto;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fafafa;
+}
+
+.login-form label {
+    margin-top: 10px;
+}
+
+.login-form input {
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+}
+
+.login-form button {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.login-form button:hover {
+    background-color: #555;
+}
