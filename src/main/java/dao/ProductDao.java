@@ -28,4 +28,25 @@ public class ProductDao {
             throw new RuntimeException(e);
         }
     }
+
+    public ProductBean doRetrieveById(int id) {
+        ProductBean p = new ProductBean();
+        try (Connection con = ConPool.getConnection()) {
+            PreparedStatement ps = con.prepareStatement("SELECT * FROM products WHERE id = ?");
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                p.setId(rs.getInt("id"));
+                p.setName(rs.getString("name"));
+                p.setDescription(rs.getString("description"));
+                p.setOrigin(rs.getString("origin"));
+                p.setManufacturer(rs.getString("manufacturer"));
+                p.setPrice(rs.getInt("price_cents"));
+                p.setStock(rs.getInt("stock"));
+            }
+            return p;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

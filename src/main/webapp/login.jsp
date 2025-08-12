@@ -26,7 +26,7 @@
     </div>
   </section>
   <aside>
-    <h3>"aside"</h3>
+      <%@ include file="/WEB-INF/fragments/aside.jsp" %>
   </aside>
 
 </div>

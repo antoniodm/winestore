@@ -8,19 +8,18 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.CartBean;
+import model.CartItem;
 import model.ProductBean;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.List;
 
 @WebServlet(name = "CartServlet", urlPatterns = {"/cart"})
 public class CartServlet extends HttpServlet {
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        System.out.println("doPost called");
 
         // Carica il carrello dalla sessione
         HttpSession session = request.getSession(true);
@@ -31,29 +30,58 @@ public class CartServlet extends HttpServlet {
             session.setAttribute("cart", cart);
         }
 
-        System.out.println("getParameter");
-
         String token_id = request.getParameter("id");
+        String action = request.getParameter("action");
+
+        if ("reset".equals(action)) {
+            cart.reset();
+            return;
+        }
         int wine_id = Integer.parseInt(token_id);
-        System.out.println("addProduct");
-        cart.addProduct(wine_id);
+
+        ProductDao service = new ProductDao();
+        ProductBean product = service.doRetrieveById(wine_id);
+
+        // Aggiungo il prodotto nel carrello
+        if ("add".equals(action)) {
+            cart.addProduct(product);
+        } else if ("remove".equals(action)) {
+            cart.removeProduct(product);
+        }
+
+        ArrayList<CartItem> cart_items = cart.getProducts();
 
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
-        ArrayList<ProductBean> products = cart.getProducts();
-        if (cart.getProducts().isEmpty()) {
+        if (cart_items == null || cart_items.isEmpty()) {
             System.out.println("cart is empty");
         } else {
-            for (ProductBean product : products) {
-                System.out.println(product.getId());
-                out.println("<h4>" + product.getId() + "</h4><br>");
-            }
+            out.print(cart.printCart());
         }
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        doPost(request, response);
+
+        // Carica il carrello dalla sessione
+        HttpSession session = request.getSession(true);
+        CartBean cart = (CartBean) session.getAttribute("cart");
+
+        if (cart == null) {
+            return;
+        }
+
+        ArrayList<CartItem> cart_items = cart.getProducts();
+
+        response.setContentType("text/html;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+
+        if (cart_items == null || cart_items.isEmpty()) {
+            System.out.println("cart is empty");
+        } else {
+            out.print(cart.printCart());
+        }
     }
+
 }
