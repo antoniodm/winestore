@@ -42,7 +42,7 @@
 <%@ include file="/WEB-INF/fragments/navbar.jsp" %>
 <div class="content">
     <section id="left_bar">
-        <h3>"left_bar"</h3>
+        <%@ include file="/WEB-INF/fragments/user_menu.jsp" %>
     </section>
     <section id="main">
         <div id="content">
@@ -122,7 +122,7 @@
         </div>
     </section>
     <aside>
-        <%@ include file="/WEB-INF/fragments/aside.jsp" %>
+        <%@ include file="/WEB-INF/fragments/cart.jsp" %>
     </aside>
 
 </div>

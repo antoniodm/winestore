@@ -17,6 +17,7 @@ CREATE TABLE users (
   password_hash VARCHAR(60)  NOT NULL,
   name          VARCHAR(100) NOT NULL,
   surname       VARCHAR(100) NOT NULL,
+  money         INT UNSIGNED NOT NULL,
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
