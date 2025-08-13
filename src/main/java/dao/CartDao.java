@@ -52,12 +52,40 @@ public class CartDao {
     }
 
     /** Aggiunge +1 al carrello OPEN dell’owner (crea il carrello se manca). */
-    public void addOneToOpenCart(Long userId, String sessionToken, int productId) throws SQLException {
+    public boolean addOneToOpenCart(Long userId, String sessionToken, int productId) throws SQLException {
         try (Connection con = ConPool.getConnection()) {
             con.setAutoCommit(false);
             int cartId = getOrCreateOpenCartId(con, userId, sessionToken);
-            addOne(con, cartId, productId);
+
+            // blocca le righe coinvolte per evitare race tra più richieste dello stesso utente
+            int stock;
+            try (PreparedStatement ps = con.prepareStatement(
+                    "SELECT stock FROM products WHERE id=? FOR UPDATE")) {
+                ps.setInt(1, productId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) { con.rollback(); return false; }
+                    stock = rs.getInt(1);
+                }
+            }
+
+            int currentQty = 0;
+            try (PreparedStatement ps = con.prepareStatement(
+                    "SELECT quantity FROM cart_items WHERE cart_id=? AND product_id=? FOR UPDATE")) {
+                ps.setInt(1, cartId);
+                ps.setInt(2, productId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) currentQty = rs.getInt(1);
+                }
+            }
+
+            if (currentQty >= stock) { // non superare lo stock
+                con.rollback();
+                return false;
+            }
+
+            addOne(con, cartId, productId); // upsert quantità +1
             con.commit();
+            return true;
         }
     }
 
@@ -77,15 +105,6 @@ public class CartDao {
             con.setAutoCommit(false);
             CartBean cart = loadOpenCart(con, userId, sessionToken);
             if (cart != null) clearCart(con, cart.getId());
-            con.commit();
-        }
-    }
-
-    /** Chiude il carrello OPEN (checkout). */
-    public void checkout(Long userId, String sessionToken) throws SQLException {
-        try (Connection con = ConPool.getConnection()) {
-            con.setAutoCommit(false);
-            closeOpenCart(con, userId, sessionToken);
             con.commit();
         }
     }
@@ -125,10 +144,66 @@ public class CartDao {
         }
     }
 
+    public boolean checkout(long userId, String sessionToken) throws SQLException {
+        try (Connection con = ConPool.getConnection()) {
+            con.setAutoCommit(false);
+
+            // 1) carica id carrello OPEN
+            CartBean cart = loadOpenCart(con, userId, sessionToken);
+            if (cart == null || cart.getProducts().isEmpty()) {
+                con.rollback();
+                return false; // niente da pagare
+            }
+
+            int cartId = cart.getId();
+
+            // Rileggi le righe (qty, product_id) direttamente dal DB per sicurezza
+            try (PreparedStatement ps = con.prepareStatement(
+                    "SELECT product_id, quantity FROM cart_items WHERE cart_id=? FOR UPDATE")) {
+                ps.setInt(1, cartId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    // 2) per ogni item, scala stock con controllo
+                    while (rs.next()) {
+                        int pid = rs.getInt("product_id");
+                        int qty = rs.getInt("quantity");
+
+                        try (PreparedStatement upd = con.prepareStatement(
+                                "UPDATE products SET stock = stock - ? " +
+                                        "WHERE id = ? AND stock >= ?")) {
+                            upd.setInt(1, qty);
+                            upd.setInt(2, pid);
+                            upd.setInt(3, qty);
+                            int affected = upd.executeUpdate();
+                            if (affected == 0) {
+                                // stock insufficiente → annulla tutto
+                                con.rollback();
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3) chiudi il carrello
+            try (PreparedStatement ps = con.prepareStatement(
+                    "UPDATE carts SET status='CLOSED' WHERE id=? AND status='OPEN'")) {
+                ps.setInt(1, cartId);
+                int closed = ps.executeUpdate();
+                if (closed == 0) {
+                    con.rollback();
+                    return false;
+                }
+            }
+
+            con.commit();
+            return true;
+        }
+    }
+
+
     /* ========================= Low-level (accettano Connection) ========================= */
 
-    /** Get-or-create dell’OPEN cart con LAST_INSERT_ID sullo stesso connection. */
-    public int getOrCreateOpenCartId(Connection con, Long userId, String sessionToken) throws SQLException {
+    private int getOrCreateOpenCartId(Connection con, Long userId, String sessionToken) throws SQLException {
         if ((userId == null) == (sessionToken == null))
             throw new IllegalArgumentException("Passa solo userId oppure solo sessionToken");
 
@@ -138,31 +213,27 @@ public class CartDao {
                 : "INSERT INTO carts (session_token, status) VALUES (?, 'OPEN') " +
                 "ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)";
 
-        try (PreparedStatement ps = con.prepareStatement(sql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY)) {
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             if (userId != null) ps.setLong(1, userId);
             else                ps.setString(1, sessionToken);
             ps.executeUpdate();
         }
-        try (PreparedStatement ps = con.prepareStatement("SELECT LAST_INSERT_ID()",
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY);
-             ResultSet rs = ps.executeQuery()) {
-            printResult(rs);
+
+        try (PreparedStatement sel = con.prepareStatement("SELECT LAST_INSERT_ID()");
+             ResultSet rs = sel.executeQuery()) {
             rs.next();
             return rs.getInt(1);
         }
     }
 
-    /** Carica il carrello OPEN (con righe e prodotti) dell’owner. */
-    public CartBean loadOpenCart(Connection con, Long userId, String sessionToken) throws SQLException {
+    // PRIVATE low-level
+    private CartBean loadOpenCart(Connection con, Long userId, String sessionToken) throws SQLException {
         if ((userId == null) == (sessionToken == null))
             throw new IllegalArgumentException("Passa solo userId oppure solo sessionToken");
 
         String where = (userId != null) ? "c.user_id=?" : "c.session_token=?";
         String sql =
-                "SELECT c.id AS cart_id, c.status, c.user_id, c.session_token, " +
+                "SELECT c.id AS cart_id, c.user_id, c.session_token, " +
                         "       ci.product_id, ci.quantity, ci.unit_price_cents, " +
                         "       p.name, p.description, p.origin, p.manufacturer, p.stock " +
                         "FROM carts c " +
@@ -170,32 +241,27 @@ public class CartDao {
                         "LEFT JOIN products p    ON p.id = ci.product_id " +
                         "WHERE c.status='OPEN' AND " + where;
 
-        try (PreparedStatement ps = con.prepareStatement(sql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY)) {
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             if (userId != null) ps.setLong(1, userId);
             else                ps.setString(1, sessionToken);
 
             try (ResultSet rs = ps.executeQuery()) {
-                printResult(rs);
                 CartBean cart = null;
-                while (rs.next()) {if (cart == null) {
-                    cart = new CartBean();
-                    cart.setId(rs.getInt("cart_id"));
-                    cart.setStatus(CartBean.CartStatus.OPEN);
-                    if (userId != null) cart.setUserId(userId);
-                    else                cart.setSessionToken(sessionToken);
-                }
 
-                    /* Con LEFT JOIN queste colonne possono essere NULL */
-                    Object pidObj  = rs.getObject("product_id");
-                    if (pidObj == null) {
-                        // carrello esistente ma senza righe: salta la creazione di CartItem
-                        continue;
+                while (rs.next()) {
+                    if (cart == null) {
+                        cart = new CartBean();
+                        cart.setId(rs.getInt("cart_id"));
+                        // opzionale: setOwner
+                        // if (userId != null) cart.setUserId(userId);
+                        // else                cart.setSessionToken(sessionToken);
                     }
-                    int pid = ((Number) pidObj).intValue();
 
-                    /* quantity/unit_price_cents sono NOT NULL a schema, ma usiamo getInt che è safe */
+                    // LEFT JOIN: possono essere NULL
+                    Object pidObj = rs.getObject("product_id");
+                    if (pidObj == null) continue; // carrello esistente ma senza righe
+
+                    int pid  = ((Number) pidObj).intValue();
                     int qty  = rs.getInt("quantity");
                     int unit = rs.getInt("unit_price_cents");
 
@@ -211,15 +277,16 @@ public class CartDao {
                     CartItem item = new CartItem(p);
                     item.setQuantity(qty);
                     cart.getProducts().add(item);
-
                 }
+
                 return cart;
             }
         }
     }
 
+
     /** Aggiunge +1 (snapshot da products). */
-    public void addOne(Connection con, int cartId, int productId) throws SQLException {
+    private void addOne(Connection con, int cartId, int productId) throws SQLException {
         String sql =
                 "INSERT INTO cart_items (cart_id, product_id, quantity, unit_price_cents) " +
                         "SELECT ?, p.id, 1, p.price_cents FROM products p WHERE p.id=? " +
@@ -232,7 +299,7 @@ public class CartDao {
     }
 
     /** Decrementa di 1; se qty diventa 0 rimuove la riga. */
-    public void decrementOrRemove(Connection con, int cartId, int productId) throws SQLException {
+    private void decrementOrRemove(Connection con, int cartId, int productId) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement(
                 "UPDATE cart_items SET quantity = quantity - 1 " +
                         "WHERE cart_id=? AND product_id=? AND quantity > 1")) {
@@ -251,7 +318,7 @@ public class CartDao {
     }
 
     /** Svuota tutte le righe del carrello. */
-    public void clearCart(Connection con, int cartId) throws SQLException {
+    private void clearCart(Connection con, int cartId) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement("DELETE FROM cart_items WHERE cart_id=?")) {
             ps.setInt(1, cartId);
             ps.executeUpdate();
@@ -259,7 +326,7 @@ public class CartDao {
     }
 
     /** Chiude il carrello OPEN dell’owner. */
-    public void closeOpenCart(Connection con, Long userId, String sessionToken) throws SQLException {
+    private void closeOpenCart(Connection con, Long userId, String sessionToken) throws SQLException {
         if ((userId == null) == (sessionToken == null))
             throw new IllegalArgumentException("Passa solo userId oppure solo sessionToken");
 
@@ -284,19 +351,20 @@ public class CartDao {
     }
 
 
-
+    // PRIVATE low-level
     private void mergeCarts(Connection con, int fromCartId, int toCartId) throws SQLException {
-        // 1) Somma qty per i product_id già esistenti nel target
+        // 1) Somma qty per prodotti già presenti nel target
         try (PreparedStatement ps = con.prepareStatement(
                 "UPDATE cart_items dst " +
-                        "JOIN cart_items src ON src.cart_id=? AND dst.cart_id=? AND dst.product_id=src.product_id " +
+                        "JOIN cart_items src " +
+                        "  ON src.cart_id=? AND dst.cart_id=? AND dst.product_id=src.product_id " +
                         "SET dst.quantity = dst.quantity + src.quantity")) {
             ps.setInt(1, fromCartId);
             ps.setInt(2, toCartId);
             ps.executeUpdate();
         }
 
-        // 2) Inserisci le righe mancanti nel target
+        // 2) Inserisci nel target le righe mancanti
         try (PreparedStatement ps = con.prepareStatement(
                 "INSERT INTO cart_items (cart_id, product_id, quantity, unit_price_cents) " +
                         "SELECT ?, src.product_id, src.quantity, src.unit_price_cents " +
@@ -309,7 +377,7 @@ public class CartDao {
             ps.executeUpdate();
         }
 
-        // 3) Pulisci il sorgente
+        // 3) Pulisci il sorgente (righe + carrello)
         try (PreparedStatement delItems = con.prepareStatement("DELETE FROM cart_items WHERE cart_id=?")) {
             delItems.setInt(1, fromCartId);
             delItems.executeUpdate();
@@ -319,6 +387,7 @@ public class CartDao {
             delCart.executeUpdate();
         }
     }
+
 
 
 

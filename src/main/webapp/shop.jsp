@@ -24,6 +24,7 @@
                     Id: <%= product.getId() %><br>
                     Name: <%= product.getName() %><br>
                     Price: <%= product.getPrice() %><br>
+                    Stock: <%= product.getStock() %><br>
                     <button type="button" class="add_to_cart" data-id="<%= product.getId() %>">Add to cart</button>
                 </li>
                 <% } %>

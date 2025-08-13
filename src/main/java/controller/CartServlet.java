@@ -19,19 +19,22 @@ import java.util.List;
 
 @WebServlet(name = "CartServlet", urlPatterns = {"/cart"})
 public class CartServlet extends HttpServlet {
-
-    // Chiamata per aggiungere/rimuovere un prodotto al carrello o resettarlo
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        System.out.println("doPost CartServlet called");
+
         response.setContentType("text/html;charset=UTF-8");
 
+        // owner dal filtro (cast sicuro)
         boolean logged = Boolean.TRUE.equals(request.getAttribute("logged"));
-        Long userId = (Long) request.getAttribute("ownerUserId");
-        String token = (String) request.getAttribute("ownerToken");
+        Long userId = null;
+        Object idAttr = request.getAttribute("ownerUserId");
+        if (logged && idAttr instanceof Number) userId = ((Number) idAttr).longValue();
+        String token = logged ? null : (String) request.getAttribute("ownerToken");
 
-        String action = request.getParameter("action");
+        String action = request.getParameter("action");   // add | remove | clear | reset | checkout
         int productId = -1;
         try { productId = Integer.parseInt(request.getParameter("id")); } catch (Exception ignored) {}
 
@@ -51,13 +54,27 @@ public class CartServlet extends HttpServlet {
                     dao.clearOpenCart(userId, token);
                     break;
                 case "checkout":
-                    dao.checkout(userId, token);
-                    break;
+                    boolean ok = dao.checkout(userId, token); // dentro fa COMMIT prima di tornare
+                    response.setHeader("X-Checkout-Done", "1");
+
+                    CartBean after = dao.loadOpenCart(userId, token);
+                    request.getSession(true).setAttribute("cart", after);
+
+                    try (PrintWriter out = response.getWriter()) {
+                        if (ok) {
+                            out.print("<div class='cart-success'>Ordine completato.</div><div class='cart-empty'>Carrello vuoto</div>");
+                        } else {
+                            response.setStatus(409);
+                            out.print("<div class='cart-error'>Disponibilità insufficiente.</div>");
+                            out.print((after == null || after.getProducts().isEmpty()) ? "<div class='cart-empty'>Carrello vuoto</div>" : after.printCart());
+                        }
+                    }
+                    return;
                 default:
                     // no-op
             }
 
-            // ricarica dal DB e aggiorna cache UI
+            // ricarica dal DB e aggiorna cache UI di sessione
             CartBean updated = dao.loadOpenCart(userId, token);
             request.getSession(true).setAttribute("cart", updated);
 
@@ -71,39 +88,36 @@ public class CartServlet extends HttpServlet {
         }
     }
 
-
+    @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Carica il carrello dalla sessione
+        response.setContentType("text/html;charset=UTF-8");
+
+        boolean logged = Boolean.TRUE.equals(request.getAttribute("logged"));
+        Long userId = null;
+        Object idAttr = request.getAttribute("ownerUserId");
+        if (logged && idAttr instanceof Number) userId = ((Number) idAttr).longValue();
+        String token = logged ? null : (String) request.getAttribute("ownerToken");
+
         HttpSession session = request.getSession(true);
         CartBean cart = (CartBean) session.getAttribute("cart");
 
-        boolean logged = Boolean.TRUE.equals(request.getAttribute("logged"));
-        Long userId = (Long) request.getAttribute("ownerUserId"); // se loggato
-        String  token  = (String)  request.getAttribute("ownerToken");  // se anonimo
-
-        // se il carrello non è stato ancora caricato in sessione
         if (cart == null) {
-            CartDao dao = new CartDao();
             try {
-                cart = dao.loadOpenCart(userId, token);
-                if (cart != null) {
-                    session.setAttribute("cart", cart);
-                }
+                cart = new CartDao().loadOpenCart(userId, token);
+                session.setAttribute("cart", cart); // cache UI
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+                throw new ServletException(e);
             }
         }
 
-        response.setContentType("text/html;charset=UTF-8");
-        PrintWriter out = response.getWriter();
-
-        if (cart == null || cart.getProducts() == null || cart.getProducts().isEmpty()) {
-            out.print("<div class='cart-empty'>Carrello vuoto</div>");
-        } else {
-            out.print(cart.printCart());
+        try (PrintWriter out = response.getWriter()) {
+            out.print((cart == null || cart.getProducts().isEmpty())
+                    ? "<div class='cart-empty'>Carrello vuoto</div>"
+                    : cart.printCart());
         }
     }
+
 
 }

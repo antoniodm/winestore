@@ -1,23 +1,14 @@
-## Tomcat
-cd /home/anto/Scaricati/apache-tomcat-11.0.9/bin
-./startup.sh 
-
-## Intellij
-/home/anto/Scaricati/idea-IU-251.26927.53
-
 CREATE USER 'admin'@'localhost' IDENTIFIED BY 'password';
 GRANT ALL PRIVILEGES ON * . * TO 'admin'@'localhost';
 
-
-
-
 use winestore;
 
-drop table users;
-drop table products;
-drop table carts;
-drop table cart_items;
-
+SET FOREIGN_KEY_CHECKS=0;
+DROP TABLE IF EXISTS cart_items;
+DROP TABLE IF EXISTS carts;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS users;
+SET FOREIGN_KEY_CHECKS=1;
 
 CREATE TABLE users (
   id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -26,8 +17,8 @@ CREATE TABLE users (
   password_hash VARCHAR(60)  NOT NULL,
   name          VARCHAR(100) NOT NULL,
   surname       VARCHAR(100) NOT NULL,
-  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE products (
   id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -37,134 +28,200 @@ CREATE TABLE products (
   manufacturer    VARCHAR(50)  NOT NULL,
   price_cents     INT UNSIGNED NOT NULL,
   stock           INT UNSIGNED NOT NULL,
-  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
--- Carts PRIMA di cart_items
 CREATE TABLE carts (
-  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  user_id       BIGINT UNSIGNED NULL,         -- se utente loggato
-  session_token CHAR(36)      NULL,           -- se anonimo (UUID nel cookie)
-  status        ENUM('OPEN','CLOSED') NOT NULL DEFAULT 'OPEN',
-  is_open       TINYINT(1) AS (status = 'OPEN') STORED,
-  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id          BIGINT UNSIGNED NULL,
+  session_token    CHAR(36) NULL,                               -- UUID per anonimo
+  status           ENUM('OPEN','CLOSED') NOT NULL DEFAULT 'OPEN',
+  created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  open_user_id       BIGINT UNSIGNED GENERATED ALWAYS AS (CASE WHEN status = 'OPEN' THEN user_id ELSE NULL END) STORED,
+  open_session_token CHAR(36) GENERATED ALWAYS AS (CASE WHEN status = 'OPEN' THEN session_token ELSE NULL END) STORED,
+
   CONSTRAINT fk_cart_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  UNIQUE KEY uq_cart_user_open (user_id, is_open),
-  UNIQUE KEY uq_cart_sess_open (session_token, is_open),
-  CONSTRAINT ck_owner CHECK (
-    (user_id IS NOT NULL) XOR (session_token IS NOT NULL)
-  )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  UNIQUE KEY uq_open_user  (open_user_id),
+  UNIQUE KEY uq_open_sess  (open_session_token)
+);
 
 CREATE TABLE cart_items (
   cart_id           INT UNSIGNED NOT NULL,
   product_id        INT UNSIGNED NOT NULL,
   quantity          INT UNSIGNED NOT NULL,
-  unit_price_cents  INT UNSIGNED NOT NULL,
+  unit_price_cents  INT UNSIGNED NOT NULL, -- snapshot prezzo al momento dell’aggiunta
   added_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (cart_id, product_id),
   CONSTRAINT fk_ci_cart    FOREIGN KEY (cart_id)    REFERENCES carts(id)    ON DELETE CASCADE,
   CONSTRAINT fk_ci_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
   CONSTRAINT ck_qty_positive CHECK (quantity > 0)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-
-
-select * from users;
-
-
-
-
-
-
-##### QUERY UTILI ######
-Aggiungi al carrello (utente loggato):
-INSERT INTO cart_items (cart_id, product_id, quantity, unit_price_cents)
-VALUES (?, ?, ?, ?)
-ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity);
-
-
-Recupera (o crea) carrello OPEN dell’utente:
--- prova a trovarlo
-SELECT id FROM carts WHERE user_id = ? AND status='OPEN';
--- se non c'è, crealo
-INSERT INTO carts (user_id) VALUES (?);
-SELECT LAST_INSERT_ID() AS cart_id;
-
-
-
-
-###### DATA DEMO #####
-
--- Assumo schema già creato come da tue tabelle
-USE winestore;
-
--- PULIZIA (mantiene integrità FK)
-SET FOREIGN_KEY_CHECKS=0;
-TRUNCATE TABLE cart_items;
-TRUNCATE TABLE carts;
-TRUNCATE TABLE products;
-TRUNCATE TABLE users;
-SET FOREIGN_KEY_CHECKS=1;
-
--- ===== USERS =====
--- password_hash = bcrypt di "password" (solo demo)
-INSERT INTO users (username, email, password_hash, name, surname) VALUES
-('antonio', 'antonio@example.com', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5CrQZ8lS9G4AOb.zG/qi8s8.cjFHe', 'Antonio', 'Rossi'),
-('maria',   'maria@example.com',   '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5CrQZ8lS9G4AOb.zG/qi8s8.cjFHe', 'Maria',   'Bianchi'),
-('luca',    'luca@example.com',    '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5CrQZ8lS9G4AOb.zG/qi8s8.cjFHe', 'Luca',    'Verdi');
-
--- IDs: 1=antonio, 2=maria, 3=luca
+);
 
 -- ===== PRODUCTS =====
 INSERT INTO products (name, description, origin, manufacturer, price_cents, stock) VALUES
-('Barolo DOCG 2018', 'Rosso strutturato, affinamento in botte.', 'Piemonte',  'Cantina Alba',            2599, 30),
-('Brunello di Montalcino 2017', 'Elegante, note di ciliegia e spezie.', 'Toscana',   'Fattoria Val d\'Orcia', 3499, 18),
-('Chianti Classico 2020', 'Fresco e versatile, ottimo a tavola.', 'Toscana',   'Podere del Sasso',       1499, 50),
-('Amarone della Valpolicella 2016', 'Corposo, uve appassite.', 'Veneto',    'Cantina della Valpolicella', 3999, 12),
-('Prosecco DOC Extra Dry', 'Spumante fragrante e fruttato.', 'Veneto',    'Casa Frizzante',            899,  100),
-('Montepulciano d\'Abruzzo 2019', 'Fruttato, tannino morbido.', 'Abruzzo',   'Terre d\'Abruzzo',         1199, 40),
-('Nero d\'Avola 2021', 'Caldo e speziato.', 'Sicilia',    'Cantine Siciliane',         1099, 45),
-('Etna Rosso 2020', 'Minerale, da suoli vulcanici.', 'Sicilia',    'Vigne Etnee',               2199, 20),
-('Franciacorta Brut', 'Metodo classico, fine perlage.', 'Lombardia', 'Tenuta Franciacorta',      2899, 15),
-('Verdicchio dei Castelli di Jesi 2021', 'Bianco sapido, note floreali.', 'Marche',    'Colline Marchigiane',      999,  35),
-('Barbera d\'Asti 2020', 'Vivace, ottima bevibilità.', 'Piemonte',  'Colline Astigiane',         1399, 30),
-('Lugana DOC 2021', 'Bianco elegante del Garda.', 'Lombardia', 'Lago Winery',               1699, 25);
+-- Piemonte
+('Barolo DOCG 2018',
+ 'Nebbiolo strutturato con note di rosa, liquirizia e catrame; tannino saldo e finale lungo.',
+ 'Piemonte, Barolo DOCG',
+ 'Tenuta Colline Nebbio',
+ 3999, 24),
 
--- IDs prodotti: 1..12 nell’ordine sopra
+('Barbaresco DOCG 2019',
+ 'Elegante interpretazione di Nebbiolo: viola, piccoli frutti rossi, spezie dolci; tannini setosi.',
+ 'Piemonte, Barbaresco DOCG',
+ 'Cantina del Rabajà',
+ 3699, 28),
 
--- ===== CARTS =====
--- Un carrello OPEN per ogni utente + uno ORDERED di storico + uno anonimo OPEN
-INSERT INTO carts (user_id) VALUES (1), (2), (3);                -- id 1..3, OPEN
-INSERT INTO carts (user_id, status) VALUES (1,'ORDERED'), (3,'ORDERED'); -- id 4..5, chiusi
-INSERT INTO carts (session_token) VALUES ('9b30e7d6-5f10-4a2a-9f4f-2d3f2b567c9a'); -- id 6, OPEN anonimo
+('Gavi 2021',
+ 'Cortese fresco e minerale, agrumi e fiori bianchi; ottimo su pesce e crostacei.',
+ 'Piemonte, Gavi DOCG',
+ 'Vigneti della Rovere',
+ 1499, 60),
 
--- ===== CART_ITEMS =====
--- Carrello OPEN di Antonio (id=1)
-INSERT INTO cart_items (cart_id, product_id, quantity, unit_price_cents) VALUES
-(1, 1,  2, 2599),   -- 2x Barolo
-(1, 3,  1, 1499),   -- 1x Chianti
-(1, 9,  1, 2899);   -- 1x Franciacorta
+-- Toscana
+('Chianti Classico 2020',
+ 'Sangiovese succoso: ciliegia croccante, viola e lieve nota balsamica; beva agile.',
+ 'Toscana, Chianti Classico DOCG',
+ 'Podere Poggio al Vento',
+ 1499, 75),
 
--- Carrello OPEN di Maria (id=2)
-INSERT INTO cart_items (cart_id, product_id, quantity, unit_price_cents) VALUES
-(2, 7,  2, 1099),   -- 2x Nero d'Avola
-(2, 10, 2,  999);   -- 2x Verdicchio
+('Brunello di Montalcino 2017',
+ 'Sangiovese di grande profondità: amarena, tabacco, spezie; finale lunghissimo.',
+ 'Toscana, Brunello di Montalcino DOCG',
+ 'Azienda Agricola La Torre',
+ 4499, 18),
 
--- Carrello OPEN di Luca (id=3)
-INSERT INTO cart_items (cart_id, product_id, quantity, unit_price_cents) VALUES
-(3, 4,  1, 3999);   -- 1x Amarone
+('Bolgheri Rosso 2020',
+ 'Taglio bordolese mediterraneo: ribes nero, erbe aromatiche, trama setosa.',
+ 'Toscana, Bolgheri Rosso DOC',
+ 'Tenuta Marina Alta',
+ 2599, 40),
 
--- Carrello ORDERED di Antonio (id=4)
-INSERT INTO cart_items (cart_id, product_id, quantity, unit_price_cents) VALUES
-(4, 2,  1, 3499),   -- 1x Brunello
-(4, 5,  3,  899);   -- 3x Prosecco
+-- Veneto
+('Amarone della Valpolicella 2016',
+ 'Uvaggio appassito: prugna, cioccolato amaro e spezie; caldo e avvolgente.',
+ 'Veneto, Amarone della Valpolicella DOCG',
+ 'Cantine del Pietrone',
+ 4999, 15),
 
--- Carrello ORDERED di Luca (id=5)
-INSERT INTO cart_items (cart_id, product_id, quantity, unit_price_cents) VALUES
-(5, 11, 6, 1399);   -- 6x Barbera
+('Valpolicella Ripasso 2020',
+ 'Frutto maturo e speziatura dolce, corpo medio e tannino morbido.',
+ 'Veneto, Valpolicella Ripasso DOC',
+ 'Casa Vinicola Pianalto',
+ 1899, 52),
 
--- Carrello OPEN Anonimo (id=6)
-INSERT INTO cart_items (cart_id, product_id, quantity, unit_price_cents) VALUES
-(6, 6,  1, 1199),   -- 1x Montepulciano
-(6, 5,  2,  899);   -- 2x Prosecco
+('Soave Classico 2021',
+ 'Garganega agrumata e sapida, mandorla finale; grande versatilità a tavola.',
+ 'Veneto, Soave Classico DOC',
+ 'Vigneti Monte Bianco',
+ 999, 80),
+
+('Prosecco Superiore Brut NV',
+ 'Bollicina fine, mela verde e pera; sorso snello e rinfrescante.',
+ 'Veneto, Prosecco Superiore DOCG',
+ 'Colline di Valdobbiadene',
+ 1299, 120),
+
+-- Lombardia
+('Franciacorta Brut NV',
+ 'Spumante metodo classico: crosta di pane, mela gialla, bollicina cremosa.',
+ 'Lombardia, Franciacorta DOCG',
+ 'Franciacorta Settevalli',
+ 2999, 36),
+
+-- Trentino-Alto Adige / Friuli
+('Pinot Grigio 2022',
+ 'Bianco secco e fragrante: pera, mela e lieve nota floreale.',
+ 'Friuli, Pinot Grigio DOC',
+ 'Cantine delle Grave',
+ 899, 95),
+
+('Gewurztraminer 2021',
+ 'Aromaticità intensa: litchi, rosa e spezie; morbido ma equilibrato.',
+ 'Trentino-Alto Adige, Gewurztraminer DOC',
+ 'Cantina Altofresco',
+ 1699, 34),
+
+('Lagrein 2020',
+ 'Rosso alpino dal frutto scuro, speziato e con tannino vellutato.',
+ 'Trentino-Alto Adige, Lagrein DOC',
+ 'Vignaioli di Bolzano',
+ 1799, 32),
+
+-- Sicilia & Sud
+('Nero d''Avola 2021',
+ 'Frutto caldo di amarena e prugna, balsamico; piacevole struttura.',
+ 'Sicilia, Nero d''Avola DOC',
+ 'Tenuta Scirocco',
+ 1299, 70),
+
+('Etna Rosso 2019',
+ 'Nerello elegante: ribes, cenere vulcanica, tannini fini e freschezza.',
+ 'Sicilia, Etna Rosso DOC',
+ 'Tenuta Etnea',
+ 1999, 38),
+
+('Grillo 2022',
+ 'Agrumi e fiori bianchi, sorso sapido e allungo salino.',
+ 'Sicilia, Grillo DOC',
+ 'Cantina del Sole',
+ 1099, 85),
+
+('Primitivo di Manduria 2020',
+ 'Mirtillo, confettura e spezie dolci; morbidezza e calore al palato.',
+ 'Puglia, Primitivo di Manduria DOC',
+ 'Masseria del Salento',
+ 1699, 58),
+
+-- Sardegna
+('Vermentino di Gallura 2021',
+ 'Aromi mediterranei, agrumi e erbe; scia minerale persistente.',
+ 'Sardegna, Vermentino di Gallura DOCG',
+ 'Cantina Arcipelago',
+ 1699, 44),
+
+('Cannonau di Sardegna 2020',
+ 'Frutto rosso maturo, macchia mediterranea; tannino morbido.',
+ 'Sardegna, Cannonau di Sardegna DOC',
+ 'Vigne del Maestrale',
+ 1399, 50),
+
+-- Centro & Adriatico
+('Montepulciano d''Abruzzo 2021',
+ 'More, pepe nero e liquirizia; struttura media e beva quotidiana.',
+ 'Abruzzo, Montepulciano d''Abruzzo DOC',
+ 'Colline Adriatiche',
+ 1199, 88),
+
+('Verdicchio dei Castelli di Jesi 2021',
+ 'Note di fiori bianchi, mandorla e agrumi; finale sapido.',
+ 'Marche, Verdicchio dei Castelli di Jesi DOC',
+ 'Cantina del Metauro',
+ 1099, 62),
+
+-- Campania & Emilia
+('Greco di Tufo 2021',
+ 'Agrumi maturi e pietra focaia; bocca tesa e minerale.',
+ 'Campania, Greco di Tufo DOCG',
+ 'Azienda Agricola Irpina',
+ 1799, 40),
+
+('Fiano di Avellino 2021',
+ 'Fiori gialli, nocciola e miele; struttura e profondità.',
+ 'Campania, Fiano di Avellino DOCG',
+ 'Tenute del Partenio',
+ 1899, 35),
+
+('Lambrusco di Sorbara 2022',
+ 'Rosso frizzante secco: fragolina, viola e grande freschezza.',
+ 'Emilia-Romagna, Lambrusco di Sorbara DOC',
+ 'Cantina del Sorbara',
+ 799, 110),
+
+-- Umbria
+('Sagrantino di Montefalco 2016',
+ 'Potente e tannico: mora, cacao e spezia; lungo potenziale evolutivo.',
+ 'Umbria, Sagrantino di Montefalco DOCG',
+ 'Tenuta Colle Umbro',
+ 3299, 20);

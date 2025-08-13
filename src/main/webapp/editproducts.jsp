@@ -15,7 +15,7 @@
     <section id="main">
         <%
             u = (model.UserBean) session.getAttribute("authUser");
-            if (u != null && u.getName().equals("admin")) {
+            if (u != null && u.getUsername().equals("admin")) {
         %>
         <div id="content">
             <h3>EDIT PRODUCTS</h3>

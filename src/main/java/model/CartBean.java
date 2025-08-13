@@ -75,7 +75,8 @@ public class CartBean {
         }
         sb.append("</ul>")
                 .append("<h3>").append(getTotalCents()).append("</h3>")
-                .append("<button type=\"button\" class=\"reset_cart\">Reset</button>");
+                .append("<button type=\"button\" class=\"reset_cart\">Reset</button>")
+                .append("<button type=\"button\" class=\"buy_cart\">Buy</button>");
         return sb.toString();
     }
 }
