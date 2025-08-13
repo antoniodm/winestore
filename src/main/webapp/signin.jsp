@@ -8,7 +8,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const content = document.getElementById('content'); // <<< MANCAVA
+            const content = document.getElementById('content');
 
             // intercetta submit dei form dentro #content
             content.addEventListener('submit', async (e) => {

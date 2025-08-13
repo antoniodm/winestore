@@ -4,69 +4,78 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+
+
 public class CartBean {
-    private int id, user_id, status, is_open;
-    ArrayList<CartItem> cart_items;
+    private Integer id;            // carts.id (INT UNSIGNED)
+    private Long userId;           // carts.user_id (BIGINT) se loggato
+    private String sessionToken;   // carts.session_token se anonimo
+    private CartStatus status = CartStatus.OPEN;
 
-    public CartBean() {}
+    public enum CartStatus { OPEN, CLOSED }
 
-    public int setId(int id) { this.id = id; return 0; }
-    public void getId() { this.id = id; }
+    private final List<CartItem> items = new ArrayList<>();
 
-    public String printCart() {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("<ul>");
-        int total_price = 0;
-        for (CartItem p : this.cart_items) {
-            stringBuilder.append("<li>" + p.getProduct().getName() + "<br>");
-            stringBuilder.append(p.getQuantity() + "<br>");
-            stringBuilder.append("<button type=\"button\" class=\"remove_from_cart\" data-id=\"" + p.getProduct().getId() + "\">Remove</button><br>");
-            stringBuilder.append(p.getPriceCents() + "</li>");
-            total_price += p.getPriceCents();
-        }
-        stringBuilder.append("</ul>");
-        stringBuilder.append("<h3>" + total_price + "</h3>");
-        stringBuilder.append("<button type=\"button\" class=\"reset_cart\">Remove</button><br>");
+    // --- Meta ---
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-        return stringBuilder.toString();
-    }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; this.sessionToken = null; }
+
+    public String getSessionToken() { return sessionToken; }
+    public void setSessionToken(String sessionToken) { this.sessionToken = sessionToken; this.userId = null; }
+
+    public CartStatus getStatus() { return status; }
+    public void setStatus(CartStatus status) { this.status = status; }
+
+    // --- Items ---
+    public List<CartItem> getProducts() { return items; }
 
     public void addProduct(ProductBean product) {
-        if (this.cart_items == null) {
-            this.cart_items = new ArrayList<CartItem>();
-        }
-
-        for (CartItem item : this.cart_items) {
+        for (CartItem item : items) {
             if (item.getProductId() == product.getId()) {
                 item.increaseProductQuantity();
                 return;
             }
         }
-
-        CartItem item = new CartItem(product);
-        this.cart_items.add(item);
+        items.add(new CartItem(product));
     }
 
     public void removeProduct(ProductBean product) {
-        if (product == null || cart_items == null || cart_items.isEmpty()) return;
-
-        for (Iterator<CartItem> it = cart_items.iterator(); it.hasNext(); ) {
+        if (product == null || items.isEmpty()) return;
+        for (Iterator<CartItem> it = items.iterator(); it.hasNext();) {
             CartItem item = it.next();
             if (item.getProductId() == product.getId()) {
-                if (item.getQuantity() > 1) {
-                    item.decreaseProductQuantity();
-                } else {
-                    it.remove();
-                }
+                if (item.getQuantity() > 1) item.decreaseProductQuantity();
+                else it.remove();
                 return;
             }
         }
     }
 
-    public void reset() {
-        cart_items.clear();
+    public void reset() { items.clear(); }
+
+    public int getTotalCents() {
+        int tot = 0;
+        for (CartItem it : items) tot += it.getLineTotalCents();
+        return tot;
     }
 
-    public ArrayList<CartItem> getProducts() { return this.cart_items; }
-
+    public String printCart() {
+        if (items.isEmpty()) return "<div class='cart-empty'>Carrello vuoto</div>";
+        StringBuilder sb = new StringBuilder("<ul>");
+        for (CartItem it : items) {
+            sb.append("<li>")
+                    .append(it.getProduct().getName()).append("<br>")
+                    .append(it.getQuantity()).append("<br>")
+                    .append("<button type=\"button\" class=\"remove_from_cart\" data-id=\"")
+                    .append(it.getProductId()).append("\">Remove</button><br>")
+                    .append(it.getLineTotalCents()).append("</li>");
+        }
+        sb.append("</ul>")
+                .append("<h3>").append(getTotalCents()).append("</h3>")
+                .append("<button type=\"button\" class=\"reset_cart\">Reset</button>");
+        return sb.toString();
+    }
 }

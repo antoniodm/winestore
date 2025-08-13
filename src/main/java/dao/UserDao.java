@@ -28,23 +28,20 @@ public class UserDao {
 
     public UserBean doRetrieveByUsername(String username) {
         try (Connection con = ConPool.getConnection()) {
-            PreparedStatement ps = con.prepareStatement("SELECT id,email,name, surname, password_hash FROM users WHERE username=?");
+            PreparedStatement ps = con.prepareStatement(
+                    "SELECT id,email,name,surname,password_hash FROM users WHERE username=?");
             ps.setString(1, username);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                UserBean p = new UserBean();
-                p.setId(rs.getInt(1));
-                p.setEmail(rs.getString(2));
-                p.setName(rs.getString(3));
-                p.setSurname(rs.getString(4));
-                p.setPasswordHash(rs.getString(5));
-                p.setUsername(username);
-                return p;
-            }
-            return null;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+            if (!rs.next()) return null;
+            UserBean u = new UserBean();
+            u.setId(rs.getLong("id"));
+            u.setEmail(rs.getString("email"));
+            u.setName(rs.getString("name"));
+            u.setSurname(rs.getString("surname"));
+            u.setPasswordHash(rs.getString("password_hash"));
+            u.setUsername(username);
+            return u;
+        } catch (SQLException e) { throw new RuntimeException(e); }
     }
 
     public UserBean doRetrieveById(int id) {

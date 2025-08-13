@@ -2,9 +2,7 @@ package model;
 
 public class ProductBean {
     private String name, description, origin, manufacturer;
-    private int id, price, stock;
-
-    public ProductBean() {}
+    private int id, price, stock; // price = price_cents
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -21,7 +19,7 @@ public class ProductBean {
     public String getManufacturer() { return manufacturer; }
     public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
 
-    public int getPrice() { return price; }
+    public int getPrice() { return price; }          // in centesimi
     public void setPrice(int price) { this.price = price; }
 
     public int getStock() { return stock; }

@@ -1,40 +1,30 @@
 package model;
 
 public class CartItem {
-    int product_id, quantity, price_cents;
-    private ProductBean product;
+    private final int productId;
+    private final int unitPriceCents;   // snapshot del prezzo unitario
+    private int quantity;
+    private final ProductBean product;  // opzionale per UI
 
     public CartItem(ProductBean product) {
         this.product = product;
-        this.product_id = product.getId();
-        this.price_cents = product.getPrice();
+        this.productId = product.getId();
+        this.unitPriceCents = product.getPrice(); // in centesimi
         this.quantity = 1;
     }
 
-    public ProductBean getProduct() { return this.product; }
+    public ProductBean getProduct() { return product; }
+    public int getProductId() { return productId; }
+    public int getUnitPriceCents() { return unitPriceCents; }
+    public int getQuantity() { return quantity; }
 
-    public int getPriceCents() {
-        return price_cents;
+    public void setQuantity(int quantity) {
+        if (quantity < 1) quantity = 1;
+        this.quantity = quantity;
     }
 
-    public int getQuantity() {
-        return quantity;
-    }
+    public void increaseProductQuantity() { this.quantity++; }
+    public void decreaseProductQuantity() { if (this.quantity > 1) this.quantity--; }
 
-    public void setQuantity(int quantity) {}
-
-    public int getProductId() {
-        return product_id;
-    }
-
-    public void increaseProductQuantity() {
-        this.quantity++;
-        this.price_cents += product.getPrice();
-    }
-
-    public void decreaseProductQuantity() {
-        this.quantity--;
-        this.price_cents -= product.getPrice();
-    }
-
+    public int getLineTotalCents() { return unitPriceCents * quantity; }
 }

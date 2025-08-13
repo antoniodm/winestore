@@ -1,76 +1,79 @@
 package controller;
 
+import dao.CartDao;
 import dao.UserDao;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.*;
+import model.CartBean;
 import model.UserBean;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.SQLException;
 
 @WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
 public class LoginServlet extends HttpServlet {
-
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Imposta il content type della risposta
-        // response.setContentType("text/html;charset=UTF-8");
-        // request.setCharacterEncoding("UTF-8");
-
-        // Recupera i parametri dal form
         String username = request.getParameter("username");
         String password = request.getParameter("password");
 
-        // Validazione di base (esempio)
-        boolean hasError = false;
-        StringBuilder errorMessage = new StringBuilder();
-
-        if (username == null || username.isEmpty()) {
-            hasError = true;
-            errorMessage.append("Il campo Username è obbligatorio.<br>");
-        }
-        if (password == null || password.isEmpty()) {
-            hasError = true;
-            errorMessage.append("Il campo Password è obbligatorio.<br>");
+        if (username == null || username.isBlank() || password == null || password.isBlank()) {
+            response.setContentType("text/html;charset=UTF-8");
+            response.getWriter().println("<h3>Username e password sono obbligatori.</h3>");
+            return;
         }
 
-        PrintWriter out = response.getWriter();
-            if (hasError) {
-                out.println("<h3>Errori nella registrazione:</h3>");
-                out.println("<p>" + errorMessage + "</p>");
-                out.println("<a href='register.html'>Torna al form</a>");
-            } else {
-                // Qui potresti salvare i dati su DB o in sessione
-                UserDao service = new UserDao();
-                UserBean user = service.doRetrieveByUsername(username);
-                if (user != null) {
-                    if (password.equals(user.getPasswordHash())) {
-                        // out.println("<h2>Login effettuato!</h2>");
-                        request.changeSessionId();
-                        HttpSession session = request.getSession(true);
-                        session.setAttribute("authUser", user);
-                        session.setMaxInactiveInterval(30*60); // 30 min
-                        response.sendRedirect(request.getContextPath() + "/index.jsp");
-                        // response.setStatus(HttpServletResponse.SC_OK);
-                    } else {
-                        out.println("<html><body>");
-                        out.println("<h2>Password errata!</h2>");
-                        out.println("</html></body>");
+        UserDao userDao = new UserDao();
+        UserBean user = userDao.doRetrieveByUsername(username);
+
+        if (user == null || !password.equals(user.getPasswordHash())) {
+            response.setContentType("text/html;charset=UTF-8");
+            response.getWriter().println("<h3>Credenziali non valide.</h3>");
+            return;
+        }
+
+        // autenticazione OK
+        request.changeSessionId();
+        HttpSession session = request.getSession(true);
+        session.setAttribute("authUser", user);
+        session.setMaxInactiveInterval(30 * 60);
+
+        // token anonimo eventuale (da sessione o cookie)
+        String anonToken = (String) session.getAttribute("user_token");
+        if (anonToken == null || anonToken.isBlank()) {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie c : cookies) {
+                    if ("user_cookie".equals(c.getName())) {
+                        anonToken = c.getValue();
+                        break;
                     }
-
-                } else {
-                    out.println("<html><body>");
-                    out.println("<h2>L'utente non esiste!</h2>");
-                    out.println("</html></body>");
                 }
-
             }
+        }
+
+        // merge carrello anonimo -> utente
+        CartDao cartDao = new CartDao();
+        try {
+            cartDao.mergeAnonymousIntoUser(user.getId(), anonToken);
+        } catch (SQLException e) {
+            throw new ServletException("Errore merge carrello in login", e);
+        }
+
+        // carica cart utente aggiornato e cache in sessione
+        try {
+            CartBean updated = cartDao.loadOpenCart(user.getId(), null);
+            session.setAttribute("cart", updated);
+        } catch (SQLException e) {
+            session.setAttribute("cart", null); // non bloccare login per UI
+        }
+
+        // opzionale: pulisci token anonimo (la navigazione ora è utente)
+        session.removeAttribute("user_token");
+
+        response.sendRedirect(request.getContextPath() + "/index.jsp");
     }
 
     // Per gestire anche le richieste GET (facoltativo)
