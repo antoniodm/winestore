@@ -9,8 +9,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const content = document.getElementById('content');
+            const responseMessage = document.getElementById('responseMessage');
 
-            // intercetta submit dei form dentro #content
             content.addEventListener('submit', async (e) => {
                 const form = e.target;
                 if (!(form instanceof HTMLFormElement)) return;
@@ -31,8 +31,8 @@
                 });
 
                 const html = await res.text();
-                content.innerHTML = html; // aggiornamento nello stesso div
-            }, true); // capture=true
+                responseMessage.innerHTML = html; // aggiorna solo il div messaggi
+            }, true);
         });
     </script>
 
@@ -46,7 +46,7 @@
     </section>
     <section id="main">
         <div id="content">
-            <form id="signin_form" action="${pageContext.request.contextPath}/signin" method="post" target="_self">
+            <form id="signin_form" action="${pageContext.request.contextPath}/account/signin" method="post" target="_self">
                     <fieldset>
                         <legend>Registrazione utente</legend>
 
@@ -59,6 +59,11 @@
                         <div>
                             <label for="cognome">Cognome</label>
                             <input type="text" id="cognome" name="cognome" required minlength="2" autocomplete="family-name">
+                        </div>
+
+                        <div>
+                            <label for="indirizzo">Indirizzo</label>
+                            <input type="text" id="indirizzo" name="indirizzo" required minlength="2" autocomplete="address">
                         </div>
 
                         <div>
@@ -105,7 +110,7 @@
 
                         <div>
                             <label for="dataNascita">Data di nascita (opzionale)</label>
-                            <input type="date" id="dataNascita" name="dataNascita" autocomplete="bday">
+                            <input type="date" id="dataNascita" name="dataNascita" autocomplete="bday" required>
                         </div>
 
                         <!-- Consensi -->
@@ -119,6 +124,7 @@
                     </fieldset>
                 </form>
             <h3>"main"</h3>
+            <div id="responseMessage"></div>
         </div>
     </section>
     <aside>

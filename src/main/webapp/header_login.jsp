@@ -6,7 +6,7 @@
   if (logged && u != null) {
 %>
 Ciao <%= u.getName() %> (<%= u.getUsername() %>)
-<a href="${pageContext.request.contextPath}/logout">Logout</a>
+<a href="${pageContext.request.contextPath}/logout">Logout</a> | <a href="account.jsp">Account</a>
 <%
 } else {
 %>

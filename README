@@ -17,7 +17,10 @@ CREATE TABLE users (
   password_hash VARCHAR(60)  NOT NULL,
   name          VARCHAR(100) NOT NULL,
   surname       VARCHAR(100) NOT NULL,
+  address       VARCHAR(255) NOT NULL,
+  birth_date    DATE NOT NULL,
   money         INT UNSIGNED NOT NULL,
+
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -33,30 +36,28 @@ CREATE TABLE products (
 );
 
 CREATE TABLE carts (
-  id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  user_id          BIGINT UNSIGNED NULL,
-  session_token    CHAR(36) NULL,                               -- UUID per anonimo
-  status           ENUM('OPEN','CLOSED') NOT NULL DEFAULT 'OPEN',
-  created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  open_user_id       BIGINT UNSIGNED GENERATED ALWAYS AS (CASE WHEN status = 'OPEN' THEN user_id ELSE NULL END) STORED,
-  open_session_token CHAR(36) GENERATED ALWAYS AS (CASE WHEN status = 'OPEN' THEN session_token ELSE NULL END) STORED,
-
-  CONSTRAINT fk_cart_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  UNIQUE KEY uq_open_user  (open_user_id),
-  UNIQUE KEY uq_open_sess  (open_session_token)
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id       BIGINT UNSIGNED NULL,
+  session_token CHAR(36) NULL,
+  is_open       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- vincoli di unicità condizionati (MySQL 8.0+)
+CREATE UNIQUE INDEX uq_open_user ON carts ( (CASE WHEN is_open THEN user_id END) );
+
+CREATE UNIQUE INDEX uq_open_sess ON carts ( (CASE WHEN is_open THEN session_token END) );
 
 CREATE TABLE cart_items (
   cart_id           INT UNSIGNED NOT NULL,
   product_id        INT UNSIGNED NOT NULL,
   quantity          INT UNSIGNED NOT NULL,
-  unit_price_cents  INT UNSIGNED NOT NULL, -- snapshot prezzo al momento dell’aggiunta
+  unit_price_cents  INT UNSIGNED NOT NULL,
   added_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (cart_id, product_id),
-  CONSTRAINT fk_ci_cart    FOREIGN KEY (cart_id)    REFERENCES carts(id)    ON DELETE CASCADE,
-  CONSTRAINT fk_ci_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
-  CONSTRAINT ck_qty_positive CHECK (quantity > 0)
+  FOREIGN KEY (cart_id)    REFERENCES carts(id)    ON DELETE CASCADE,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
 );
 
 -- ===== PRODUCTS =====

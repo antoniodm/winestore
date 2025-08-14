@@ -1,8 +1,32 @@
 package model;
 
 public class UserBean {
-    private String username, email, passwordHash, name, surname;
+    private String username, email, passwordHash, name, surname, birthdate, address;
     private long id; // BIGINT
+    private int money;
+
+    public int getMoney() {
+        return money;
+    }
+    public void setMoney(int money) {
+        this.money = money;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getBirthdate() {
+        return birthdate;
+    }
+
+    public void setBirthdate(String birthdate) {
+        this.birthdate = birthdate;
+    }
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }

@@ -186,7 +186,7 @@ public class CartDao {
 
             // 3) chiudi il carrello
             try (PreparedStatement ps = con.prepareStatement(
-                    "UPDATE carts SET status='CLOSED' WHERE id=? AND status='OPEN'")) {
+                    "UPDATE carts SET is_open=FALSE WHERE id=? AND is_open=TRUE")) {
                 ps.setInt(1, cartId);
                 int closed = ps.executeUpdate();
                 if (closed == 0) {
@@ -208,9 +208,9 @@ public class CartDao {
             throw new IllegalArgumentException("Passa solo userId oppure solo sessionToken");
 
         final String sql = (userId != null)
-                ? "INSERT INTO carts (user_id, status) VALUES (?, 'OPEN') " +
+                ? "INSERT INTO carts (user_id, is_open) VALUES (?, TRUE) " +
                 "ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)"
-                : "INSERT INTO carts (session_token, status) VALUES (?, 'OPEN') " +
+                : "INSERT INTO carts (session_token, is_open) VALUES (?, TRUE) " +
                 "ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -239,7 +239,7 @@ public class CartDao {
                         "FROM carts c " +
                         "LEFT JOIN cart_items ci ON ci.cart_id = c.id " +
                         "LEFT JOIN products p    ON p.id = ci.product_id " +
-                        "WHERE c.status='OPEN' AND " + where;
+                        "WHERE c.is_open AND " + where;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             if (userId != null) ps.setLong(1, userId);
@@ -331,8 +331,8 @@ public class CartDao {
             throw new IllegalArgumentException("Passa solo userId oppure solo sessionToken");
 
         String sql = (userId != null)
-                ? "UPDATE carts SET status='CLOSED' WHERE user_id=? AND status='OPEN'"
-                : "UPDATE carts SET status='CLOSED' WHERE session_token=? AND status='OPEN'";
+                ? "UPDATE carts SET is_open=FALSE WHERE user_id=? AND is_open=TRUE"
+                : "UPDATE carts SET is_open=FALSE WHERE session_token=? AND is_open=TRUE";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             if (userId != null) ps.setLong(1, userId);
@@ -343,7 +343,7 @@ public class CartDao {
 
     private void attachAnonymousCartToUser(Connection con, String sessionToken, long userId) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement(
-                "UPDATE carts SET user_id=?, session_token=NULL WHERE session_token=? AND status='OPEN'")) {
+                "UPDATE carts SET user_id=?, session_token=NULL WHERE session_token=? AND is_open")) {
             ps.setLong(1, userId);
             ps.setString(2, sessionToken);
             ps.executeUpdate();
