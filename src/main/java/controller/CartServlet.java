@@ -8,10 +8,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.CartBean;
+import model.UserBean;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 
 @WebServlet(name = "CartServlet", urlPatterns = {"/cart"})
 public class CartServlet extends HttpServlet {
@@ -79,8 +81,18 @@ public class CartServlet extends HttpServlet {
                         ? "<div class='cart-empty'>Carrello vuoto</div>"
                         : updated.printCart());
             }
+        } catch (SQLIntegrityConstraintViolationException e) {
+            // p.es. conflitti di vincoli/duplicati
+            response.setStatus(HttpServletResponse.SC_CONFLICT); // 409
+            try (PrintWriter out = response.getWriter()) {
+                out.print("<div class='cart-error'>Operazione non valida: "
+                        + e.getMessage() + "</div>");
+            }
         } catch (SQLException e) {
-            throw new ServletException(e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500
+            try (PrintWriter out = response.getWriter()) {
+                out.print("<div class='cart-error'>Errore interno carrello.</div>");
+            }
         }
     }
 

@@ -9,7 +9,9 @@ import model.CartBean;
 import model.UserBean;
 
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.sql.SQLException;
+import java.util.Base64;
 
 @WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
 public class LoginServlet extends HttpServlet {
@@ -28,7 +30,19 @@ public class LoginServlet extends HttpServlet {
         UserDao userDao = new UserDao();
         UserBean user = userDao.doRetrieveByUsername(username);
 
-        if (user == null || !password.equals(user.getPasswordHash())) {
+
+        // Hashing della password
+        String password_hash = password;
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = md.digest(password.getBytes("UTF-8"));
+            password_hash = Base64.getEncoder().encodeToString(hashBytes);
+            System.out.println("Password hash: " + password_hash);
+        } catch (Exception e) {
+            System.out.println("Errore nella SHA-256");
+        }
+
+        if (user == null || !password_hash.equals(user.getPasswordHash())) {
             response.setContentType("text/html;charset=UTF-8");
             response.getWriter().println("<h3>Credenziali non valide.</h3>");
             return;
@@ -72,7 +86,6 @@ public class LoginServlet extends HttpServlet {
 
         // opzionale: pulisci token anonimo (la navigazione ora è utente)
         session.removeAttribute("user_token");
-
         response.sendRedirect(request.getContextPath() + "/index.jsp");
     }
 

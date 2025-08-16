@@ -4,6 +4,9 @@
 <head>
     <title>Wine Store</title>
     <link rel="stylesheet" type="text/css" href="winestore.css">
+    <script> window.CTX = '<%= request.getContextPath() %>'; </script>
+    <script src="scripts.js" defer></script>
+
 </head>
 <body>
 <%@ include file="/WEB-INF/fragments/header.jsp" %>

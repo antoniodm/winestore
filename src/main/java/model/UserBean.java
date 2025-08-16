@@ -1,9 +1,25 @@
 package model;
 
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import java.security.MessageDigest;
+import java.util.Base64;
+
 public class UserBean {
     private String username, email, passwordHash, name, surname, birthdate, address;
     private long id; // BIGINT
     private int money;
+
+    public static String encodePassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = md.digest(password.getBytes("UTF-8"));
+            return Base64.getEncoder().encodeToString(hashBytes);
+        } catch (Exception e) {
+            System.out.println("Errore nella SHA-256");
+            return null;
+        }
+    }
 
     public int getMoney() {
         return money;

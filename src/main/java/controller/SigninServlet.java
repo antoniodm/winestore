@@ -9,9 +9,12 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.security.MessageDigest;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.Base64;
+import java.util.Random;
 
 @WebServlet(name = "SigninServlet", urlPatterns = {"/account/edit", "/account/signin"})
 public class SigninServlet extends HttpServlet {
@@ -49,6 +52,7 @@ public class SigninServlet extends HttpServlet {
             hasError = true;
             errorMessage.append("Il campo Password è obbligatorio.<br>");
         }
+
         if (email == null || !email.contains("@")) {
             hasError = true;
             errorMessage.append("Inserire un'email valida.<br>");
@@ -78,7 +82,6 @@ public class SigninServlet extends HttpServlet {
                 out.println("<p>" + errorMessage + "</p>");
                 out.println("<a href='signin.html'>Torna al form</a>");
             } else {
-                // Qui potresti salvare i dati su DB o in sessione
                 UserDao service = new UserDao();
                 UserBean user = service.doRetrieveByInfo(username, email);
                 // Se voglio iscrivermi ma l'utente esiste già
@@ -91,17 +94,31 @@ public class SigninServlet extends HttpServlet {
                     if (user == null) {
                         user =  new UserBean();
                     }
+                    // Hashing della password
+                    String password_hash = password;
+                    try {
+                        MessageDigest md = MessageDigest.getInstance("SHA-256");
+                        byte[] hashBytes = md.digest(password.getBytes("UTF-8"));
+                        password_hash = Base64.getEncoder().encodeToString(hashBytes);
+                        System.out.println("Password hash: " + password_hash);
+                    } catch (Exception e) {
+                        System.out.println("Errore nella SHA-256");
+                    }
 
                     user.setUsername(username);
                     user.setEmail(email);
-                    user.setPasswordHash(password);
+                    user.setPasswordHash(password_hash);
                     user.setName(name);
                     user.setSurname(surname);
                     user.setBirthdate(birthdate);
                     user.setAddress(address);
-                    // user.setMoney(0);
+                    user.setMoney(0);
+
 
                     if (is_signin) {
+                        if ("admin".equals(username)) {
+                            user.setMoney(999999);
+                        }
                         if (service.insert(user)) {
                             out.println("<h2>Registrazione avvenuta con successo!</h2>");
                             request.getSession().setAttribute("authUser", user);

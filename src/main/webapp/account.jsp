@@ -4,37 +4,8 @@
 <head>
     <title>Wine Store</title>
     <link rel="stylesheet" type="text/css" href="winestore.css">
-    <script>
-        const CTX = '<%= request.getContextPath() %>'; // es: "/winestore"
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const content = document.getElementById('content');
-            const responseMessage = document.getElementById('responseMessage');
-
-            content.addEventListener('submit', async (e) => {
-                const form = e.target;
-                if (!(form instanceof HTMLFormElement)) return;
-
-                e.preventDefault();
-                if (!form.reportValidity()) return;
-
-                const body = new URLSearchParams(new FormData(form));
-
-                const res = await fetch(form.action, {
-                    method: (form.method || 'POST').toUpperCase(),
-                    body,
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-
-                const html = await res.text();
-                responseMessage.innerHTML = html; // aggiorna solo il div messaggi
-            }, true);
-        });
-    </script>
+    <script> window.CTX = '<%= request.getContextPath() %>'; </script>
+    <script src="scripts.js" defer></script>
 </head>
 <body>
 <%@ include file="/WEB-INF/fragments/header.jsp" %>

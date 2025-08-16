@@ -96,7 +96,7 @@ public class UserDao {
 
 
     public boolean insert(UserBean u) throws SQLException {
-        String sql = "INSERT INTO users(username,email,password_hash,name, surname, address, birth_date, money) VALUES(?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO users(username,email,password_hash, name, surname, address, birth_date, money) VALUES(?,?,?,?,?,?,?,?)";
         try (Connection con = ConPool.getConnection();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, u.getUsername());
@@ -107,6 +107,7 @@ public class UserDao {
             ps.setString(6, u.getAddress());
             ps.setString(7, u.getBirthdate());
             ps.setInt(8, u.getMoney());
+            System.out.println(ps);
             if (ps.executeUpdate() != 1) {
                 throw new RuntimeException("INSERT error.");
             }
