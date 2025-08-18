@@ -29,7 +29,7 @@
         <div id="content">
             <h3><%= isEdit ? "Modifica prodotto" : "Nuovo prodotto" %></h3>
 
-            <form action="<%= isEdit ? (ctx + "/product/edit") : (ctx + "/admin/product/insert") %>"
+            <form action="<%= isEdit ? (ctx + "/product/update") : (ctx + "/product/add") %>"
                   method="post" enctype="multipart/form-data">
 
                 <% if (isEdit) { %>
@@ -69,6 +69,7 @@
                 <input type="file" name="image" accept="image/*"><br><br>
 
                 <button type="submit"><%= isEdit ? "Salva modifiche" : "Crea prodotto" %></button>
+
                 <a href="<%= ctx %>/admin/products">Annulla</a>
             </form>
         </div>

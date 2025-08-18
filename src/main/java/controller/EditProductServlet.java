@@ -7,17 +7,13 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.Part;
 import model.ProductBean;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 
-@WebServlet(name = "EditProductServlet", urlPatterns = {"/product/edit", "/product/delete"})
+@WebServlet(name = "EditProductServlet", urlPatterns = {"/product/update", "/product/edit", "/product/delete"})
 @MultipartConfig(
         fileSizeThreshold = 1_000_000,    // 1MB buffer
         maxFileSize = 5_000_000L,         // 5MB
@@ -33,10 +29,11 @@ public class EditProductServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        boolean is_edit = "/product/edit".equals(request.getServletPath());
+        boolean is_edit =   "/product/edit".equals(request.getServletPath());
         boolean is_delete = "/product/delete".equals(request.getServletPath());
+        boolean is_update = "/product/update".equals(request.getServletPath());
 
-        System.out.println("Called product edit servlet");
+        System.out.println("Called product edit servlet " + " edit: " + is_edit + " delete: " + is_delete + " update: " + is_update);
 
         if (is_edit) {
             System.out.println("Called product edit servlet isEdit");
@@ -49,6 +46,14 @@ public class EditProductServlet extends HttpServlet {
             } else {
                 System.out.println("Called product edit servlet prod is null");
             }
+        }
+
+        if (is_delete) {
+            System.out.println("Called product delete servlet isDelete");
+        }
+
+        if (is_update) {
+            System.out.println("Called product update servlet isUpdate");
         }
     }
 }
