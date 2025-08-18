@@ -7,15 +7,17 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
 import model.ProductBean;
 
-
-import jakarta.servlet.http.*;
-import java.io.*;
-import java.nio.file.*;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
-@WebServlet(name = "EditProductServlet", urlPatterns = {"/editproducts"})
+@WebServlet(name = "EditProductServlet", urlPatterns = {"/product/edit", "/product/delete"})
 @MultipartConfig(
         fileSizeThreshold = 1_000_000,    // 1MB buffer
         maxFileSize = 5_000_000L,         // 5MB
@@ -27,54 +29,26 @@ public class EditProductServlet extends HttpServlet {
         // <app>/WEB-INF/images
         return Paths.get(getServletContext().getRealPath("/WEB-INF/images"));
     }
+
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.setCharacterEncoding("UTF-8");
+        boolean is_edit = "/product/edit".equals(request.getServletPath());
+        boolean is_delete = "/product/delete".equals(request.getServletPath());
 
-        String name = request.getParameter("name");
-        String description = request.getParameter("description");
-        String origin = request.getParameter("origin");
-        String manufacturer = request.getParameter("manufacturer");
-        int price = Integer.parseInt(request.getParameter("price_cents"));
-        int stock = Integer.parseInt(request.getParameter("stock"));
+        System.out.println("Called product edit servlet");
 
-        // upload opzionale
-        Part imagePart = request.getPart("image");
-        String storedFileName = null;
-
-        if (imagePart != null && imagePart.getSize() > 0) {
-            String mime = imagePart.getContentType();
-            if (mime == null || !(mime.startsWith("image/"))) {
-                response.sendError(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, "Formato immagine non valido");
-                return;
-            }
-
-            String original = Paths.get(imagePart.getSubmittedFileName()).getFileName().toString();
-            String base = original.replaceAll("[^a-zA-Z0-9._-]", "_");
-            String ext = base.contains(".") ? base.substring(base.lastIndexOf('.')) : "";
-            storedFileName = System.currentTimeMillis() + "_" + Integer.toHexString(base.hashCode()) + ext;
-
-            Path dir = imagesDir(request);
-            Files.createDirectories(dir);
-            try (InputStream in = imagePart.getInputStream()) {
-                Files.copy(in, dir.resolve(storedFileName), StandardCopyOption.REPLACE_EXISTING);
+        if (is_edit) {
+            System.out.println("Called product edit servlet isEdit");
+            String product_id = request.getParameter("prod_id");
+            ProductBean prod = new ProductDao().doRetrieveById(Integer.parseInt(product_id));
+            if (prod != null) {
+                System.out.println("Called product edit servlet prod: " + prod.getName());
+                request.setAttribute("prod", prod);
+                request.getRequestDispatcher("/editproducts.jsp").forward(request, response);
+            } else {
+                System.out.println("Called product edit servlet prod is null");
             }
         }
-
-        ProductBean p = new ProductBean();
-        p.setName(name);
-        p.setDescription(description);
-        p.setOrigin(origin);
-        p.setManufacturer(manufacturer);
-        p.setPrice(price);
-        p.setStock(stock);
-        p.setImagePath(storedFileName); // solo nome file o null
-
-        System.out.println("NEW PROD name " + name);
-
-        new ProductDao().insert(p);
-
-        response.getWriter().println("Nuovo Prodotto Aggiunto");
     }
 }

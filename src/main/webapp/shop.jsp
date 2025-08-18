@@ -36,8 +36,17 @@
                         u = (model.UserBean) session.getAttribute("authUser");
                         if (u != null && u.getUsername().equals("admin")) {
                     %>
-                        <button type="button" class="del_prod_btn" data-id="<%= product.getId() %>">Edit</button>
-                        <button type="button" class="edit_prod_btn" data-id="<%= product.getId() %>">Delete</button>
+
+                    <form action="${pageContext.request.contextPath}/product/delete" method="post">
+                        <input type="hidden" name="prod_id" value="<%= product.getId() %>">
+                        <button type="submit" class="del_prod_btn">Elimina</button>
+                    </form>
+
+                    <form action="${pageContext.request.contextPath}/product/edit" method="post">
+                        <input type="hidden" name="prod_id" value="<%= product.getId() %>">
+                        <button type="submit" class="del_prod_btn">Modifica</button>
+                    </form>
+
                     <%}%>
                 </li>
                 <% } %>
