@@ -28,7 +28,17 @@
                     Name: <%= product.getName() %><br>
                     Price: <%= product.getPrice() %><br>
                     Stock: <%= product.getStock() %><br>
+                    <% if (product.getImagePath() != null && !product.getImagePath().isEmpty()) { %>
+                    <img src="<%= request.getContextPath() %>/image/<%= product.getImagePath() %>" alt="<%= product.getName() %>" width="160">
+                    <% } %>
                     <button type="button" class="add_to_cart" data-id="<%= product.getId() %>">Add to cart</button>
+                    <%
+                        u = (model.UserBean) session.getAttribute("authUser");
+                        if (u != null && u.getUsername().equals("admin")) {
+                    %>
+                        <button type="button" class="del_prod_btn" data-id="<%= product.getId() %>">Edit</button>
+                        <button type="button" class="edit_prod_btn" data-id="<%= product.getId() %>">Delete</button>
+                    <%}%>
                 </li>
                 <% } %>
             </ul>

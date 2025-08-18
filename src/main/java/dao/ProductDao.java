@@ -7,6 +7,28 @@ import java.util.ArrayList;
 
 public class ProductDao {
 
+    public void insert(ProductBean p) {
+        String sql = "INSERT INTO products " +
+                "(name, description, origin, manufacturer, image_path, price_cents, stock) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection con = ConPool.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, p.getName());
+            ps.setString(2, p.getDescription());
+            ps.setString(3, p.getOrigin());
+            ps.setString(4, p.getManufacturer());
+            ps.setString(5, p.getImagePath());
+            ps.setInt(6, p.getPrice());
+            ps.setInt(7, p.getStock());
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public ArrayList<ProductBean> doRetrieveAll() {
         try (Connection con = ConPool.getConnection()) {
             ArrayList<ProductBean> products = new ArrayList<>();
@@ -19,6 +41,7 @@ public class ProductDao {
                 p.setDescription(rs.getString("description"));
                 p.setOrigin(rs.getString("origin"));
                 p.setManufacturer(rs.getString("manufacturer"));
+                p.setImagePath(rs.getString("image_path"));
                 p.setPrice(rs.getInt("price_cents"));
                 p.setStock(rs.getInt("stock"));
                 products.add(p);
@@ -32,7 +55,7 @@ public class ProductDao {
     public ProductBean doRetrieveById(int id) {
         try (Connection con = ConPool.getConnection()) {
             PreparedStatement ps = con.prepareStatement(
-                    "SELECT id,name,description,origin,manufacturer,price_cents,stock FROM products WHERE id=?");
+                    "SELECT id,name,description,origin,manufacturer, image_path, price_cents,stock FROM products WHERE id=?");
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
             if (!rs.next()) return null;
@@ -42,9 +65,20 @@ public class ProductDao {
             p.setDescription(rs.getString("description"));
             p.setOrigin(rs.getString("origin"));
             p.setManufacturer(rs.getString("manufacturer"));
+            p.setImagePath(rs.getString("image_path"));
             p.setPrice(rs.getInt("price_cents"));
             p.setStock(rs.getInt("stock"));
             return p;
         } catch (SQLException e) { throw new RuntimeException(e); }
+    }
+
+    public void updateImagePath(long productId, String imagePath) throws SQLException {
+        String sql = "UPDATE products SET image_path=? WHERE id=?";
+        try (Connection con = ConPool.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, imagePath);
+            ps.setLong(2, productId);
+            ps.executeUpdate();
+        }
     }
 }

@@ -1,7 +1,7 @@
 package model;
 
 public class ProductBean {
-    private String name, description, origin, manufacturer;
+    private String name, description, origin, manufacturer, imagePath;
     private int id, price, stock; // price = price_cents
 
     public int getId() { return id; }
@@ -18,6 +18,9 @@ public class ProductBean {
 
     public String getManufacturer() { return manufacturer; }
     public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
+
+    public String getImagePath() { return imagePath; }
+    public void setImagePath(String imagePath) { this.imagePath = imagePath; }
 
     public int getPrice() { return price; }          // in centesimi
     public void setPrice(int price) { this.price = price; }

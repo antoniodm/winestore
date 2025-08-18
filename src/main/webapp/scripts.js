@@ -84,21 +84,45 @@ async function postCart(bodyObj) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const content = document.getElementById('content');
-    const responseMessage = document.getElementById('responseMessage');
-
     if (!content) return;
 
     content.addEventListener('submit', async (e) => {
         const form = e.target;
         if (!(form instanceof HTMLFormElement)) return;
+        if (!e.submitter || e.submitter.id !== 'add_prod_btn') return;
 
-        // Esci se ricevi click da bottoni divetrsi da quello di registrazione
+        e.preventDefault();
+        if (!form.reportValidity()) return;
+
+        const body = new FormData(form); // multipart, nessun content-type manuale!
+
+        const res = await fetch(form.action, {
+            method: (form.method || 'POST').toUpperCase(),
+            body,
+            credentials: 'same-origin',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        content.innerHTML = await res.text();
+    }, true);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const content = document.getElementById('content');
+    if (!content) return;
+
+    content.addEventListener('submit', async (e) => {
+        const form = e.target;
+        if (!(form instanceof HTMLFormElement)) return;
         if (!e.submitter || e.submitter.id !== 'btnRegister') return;
 
         e.preventDefault();
         if (!form.reportValidity()) return;
 
         const body = new URLSearchParams(new FormData(form));
+
         const res = await fetch(form.action, {
             method: (form.method || 'POST').toUpperCase(),
             body,
@@ -110,13 +134,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const html = await res.text();
+        const responseMessage = document.getElementById('responseMessage');
         if (responseMessage) responseMessage.innerHTML = html;
+        else content.innerHTML = html;
     }, true);
 });
 
 
 document.addEventListener('click', (e) => {
-    console.log("CIAO");
     const btn = e.target.closest('.add_to_cart, .remove_from_cart, .reset_cart, .buy_cart');
     if (!btn) return;
     e.preventDefault();

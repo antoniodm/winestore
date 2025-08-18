@@ -21,7 +21,33 @@
         %>
         <div id="content">
             <h3>EDIT PRODUCTS</h3>
+            <form action="${pageContext.request.contextPath}/editproducts"
+                  method="post" enctype="multipart/form-data">
+                <label>Nome</label>
+                <input type="text" name="name" required><br>
+
+                <label>Descrizione</label>
+                <textarea name="description" required></textarea><br>
+
+                <label>Origine</label>
+                <input type="text" name="origin" required><br>
+
+                <label>Produttore</label>
+                <input type="text" name="manufacturer" required><br>
+
+                <label>Prezzo (centesimi)</label>
+                <input type="number" name="price_cents" required min="0"><br>
+
+                <label>Stock</label>
+                <input type="number" name="stock" required min="0"><br>
+
+                <label>Immagine</label>
+                <input type="file" name="image" accept="image/*"><br><br>
+
+                <button type="submit" id="add_prod_btn">Crea prodotto</button>
+            </form>
         </div>
+        <div id="responseMessage"></div>
         <%
             } else {
         %>
