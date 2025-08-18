@@ -144,7 +144,7 @@ public class CartDao {
         }
     }
 
-    public boolean checkout(long userId, String sessionToken) throws SQLException {
+    public boolean checkout(long userId, int user_money, String sessionToken) throws SQLException {
         try (Connection con = ConPool.getConnection()) {
             con.setAutoCommit(false);
 
@@ -153,6 +153,11 @@ public class CartDao {
             if (cart == null || cart.getProducts().isEmpty()) {
                 con.rollback();
                 return false; // niente da pagare
+            }
+
+            if (cart.getTotalCents() > user_money ) {
+                System.out.println("No Money bro!");
+                return false;
             }
 
             int cartId = cart.getId();

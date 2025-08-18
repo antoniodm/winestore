@@ -92,8 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const form = e.target;
         if (!(form instanceof HTMLFormElement)) return;
 
-        // se vuoi gestire via AJAX solo certe form, filtra:
-        // if (!e.submitter || e.submitter.id !== 'btnRegister') return;
+        // Esci se ricevi click da bottoni divetrsi da quello di registrazione
+        if (!e.submitter || e.submitter.id !== 'btnRegister') return;
 
         e.preventDefault();
         if (!form.reportValidity()) return;

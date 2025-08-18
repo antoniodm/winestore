@@ -2,6 +2,7 @@ package controller;
 
 import dao.CartDao;
 import dao.UserDao;
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
@@ -23,7 +24,9 @@ public class LoginServlet extends HttpServlet {
 
         if (username == null || username.isBlank() || password == null || password.isBlank()) {
             response.setContentType("text/html;charset=UTF-8");
-            response.getWriter().println("<h3>Username e password sono obbligatori.</h3>");
+            request.setAttribute("loginError", "Username e password sono obbligatori.");
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/index.jsp");
+            dispatcher.forward(request, response);
             return;
         }
 
@@ -44,7 +47,9 @@ public class LoginServlet extends HttpServlet {
 
         if (user == null || !password_hash.equals(user.getPasswordHash())) {
             response.setContentType("text/html;charset=UTF-8");
-            response.getWriter().println("<h3>Credenziali non valide.</h3>");
+            request.setAttribute("loginError", "Credenziali non valide.");
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/index.jsp");
+            dispatcher.forward(request, response);
             return;
         }
 
@@ -52,15 +57,17 @@ public class LoginServlet extends HttpServlet {
         request.changeSessionId();
         HttpSession session = request.getSession(true);
         session.setAttribute("authUser", user);
+        session.setAttribute("logged", Boolean.TRUE);
+
         session.setMaxInactiveInterval(30 * 60);
 
         // token anonimo eventuale (da sessione o cookie)
-        String anonToken = (String) session.getAttribute("user_token");
+        String anonToken = (String) session.getAttribute("guestToken");
         if (anonToken == null || anonToken.isBlank()) {
             Cookie[] cookies = request.getCookies();
             if (cookies != null) {
                 for (Cookie c : cookies) {
-                    if ("user_cookie".equals(c.getName())) {
+                    if ("guestToken".equals(c.getName())) {
                         anonToken = c.getValue();
                         break;
                     }

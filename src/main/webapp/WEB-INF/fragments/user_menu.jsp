@@ -4,7 +4,7 @@
 <div id="user_menu">
 <%@ page import="model.UserBean" %>
 <%@ page import="model.CartBean" %>
-<% boolean is_logged = (boolean) request.getAttribute("logged"); %>
+<% boolean is_logged = Boolean.TRUE.equals(session.getAttribute("logged")); %>
 <% if (is_logged) {%>
 <% UserBean user = (UserBean) session.getAttribute("authUser"); %>
 <% CartBean cart = (CartBean) session.getAttribute("cart"); %>

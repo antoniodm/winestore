@@ -17,9 +17,14 @@
     <section id="main">
         <div id="content">
             <h3>INDEX</h3>
-            <% model.UserBean user = (model.UserBean) session.getAttribute("authUser"); %>
-            <% if (user != null)  { %>
-                Ciao <%= user.getName() %> (<%= user.getUsername() %>)
+            <% String loginError = (String) request.getAttribute("loginError"); %>
+            <% if (loginError != null) { %>
+                <%= loginError %>
+            <% } else {%>
+                <% model.UserBean user = (model.UserBean) session.getAttribute("authUser"); %>
+                <% if (user != null)  { %>
+                    Ciao <%= user.getName() %> (<%= user.getUsername() %>)
+                <% } %>
             <% } %>
         </div>
     </section>

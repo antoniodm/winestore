@@ -2,7 +2,7 @@
 <%@ page import="java.util.UUID" %>
 <%
     model.UserBean u = (model.UserBean) session.getAttribute("authUser");
-    boolean logged = Boolean.TRUE.equals(request.getAttribute("logged"));
+    boolean logged = Boolean.TRUE.equals(session.getAttribute("logged"));
   if (logged && u != null) {
 %>
 Ciao <%= u.getName() %> (<%= u.getUsername() %>)

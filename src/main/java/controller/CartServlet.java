@@ -7,8 +7,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.CartBean;
-import model.UserBean;
+import model.*;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -21,16 +20,26 @@ public class CartServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        System.out.println("doPost CartServlet called");
-
         response.setContentType("text/html;charset=UTF-8");
 
-        // owner dal filtro (cast sicuro)
-        boolean logged = Boolean.TRUE.equals(request.getAttribute("logged"));
-        Long userId = null;
-        Object idAttr = request.getAttribute("ownerUserId");
-        if (logged && idAttr instanceof Number) userId = ((Number) idAttr).longValue();
-        String token = logged ? null : (String) request.getAttribute("ownerToken");
+        AuthUtil.Owner owner = AuthUtil.resolveOwner(request, response);
+        boolean logged = owner.logged;
+        Long   userId = owner.userId;
+        String token  = owner.guestToken;
+
+        HttpSession session = request.getSession(true);
+
+        UserBean user = (UserBean) session.getAttribute("authUser");;
+        int user_money = 0;
+        if (logged) {
+            user_money = user.getMoney();
+        }
+
+        System.out.println("Cart doPost called");
+        System.out.println("logged = " + logged);
+        System.out.println("token = " + token);
+        System.out.println("userId = " + userId);
+        System.out.println("user_money = " + user_money);
 
         String action = request.getParameter("action");   // add | remove | clear | reset | checkout
         int productId = -1;
@@ -52,7 +61,10 @@ public class CartServlet extends HttpServlet {
                     dao.clearOpenCart(userId, token);
                     break;
                 case "checkout":
-                    boolean ok = dao.checkout(userId, token); // dentro fa COMMIT prima di tornare
+
+                    CartBean before = dao.loadOpenCart(userId, token);
+
+                    boolean ok = dao.checkout(userId, user_money, token); // dentro fa COMMIT prima di tornare
                     response.setHeader("X-Checkout-Done", "1");
 
                     CartBean after = dao.loadOpenCart(userId, token);
@@ -60,6 +72,12 @@ public class CartServlet extends HttpServlet {
 
                     try (PrintWriter out = response.getWriter()) {
                         if (ok) {
+                            System.out.println("Money: " + user_money + " Price: " + before.getTotalCents());
+                            UserDao userDao = new UserDao();
+                            if (userDao.updateCredit(userId, (user_money - before.getTotalCents()))) {
+                                user.setMoney(user_money - before.getTotalCents());
+                            }
+
                             out.print("<div class='cart-success'>Ordine completato.</div><div class='cart-empty'>Carrello vuoto</div>");
                         } else {
                             response.setStatus(409);
@@ -102,11 +120,15 @@ public class CartServlet extends HttpServlet {
 
         response.setContentType("text/html;charset=UTF-8");
 
-        boolean logged = Boolean.TRUE.equals(request.getAttribute("logged"));
-        Long userId = null;
-        Object idAttr = request.getAttribute("ownerUserId");
-        if (logged && idAttr instanceof Number) userId = ((Number) idAttr).longValue();
-        String token = logged ? null : (String) request.getAttribute("ownerToken");
+        AuthUtil.Owner owner = AuthUtil.resolveOwner(request, response);
+        boolean logged = owner.logged;
+        Long   userId = owner.userId;
+        String token  = owner.guestToken;
+
+        System.out.println("Cart doPost called");
+        System.out.println("logged = " + logged);
+        System.out.println("token = " + token);
+        System.out.println("userId = " + userId);
 
         HttpSession session = request.getSession(true);
         CartBean cart = (CartBean) session.getAttribute("cart");

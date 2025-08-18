@@ -94,6 +94,30 @@ public class UserDao {
         }
     }
 
+    public boolean updateCredit(Long user_id, int money) throws SQLException {
+        String sql = "UPDATE users set money=? WHERE id=?";
+        try (Connection con = ConPool.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, money);
+            ps.setLong(2, user_id);
+
+            System.out.println(ps);
+
+            int rowsUpdated = ps.executeUpdate();
+
+            System.out.println(rowsUpdated);
+            if (rowsUpdated > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (SQLIntegrityConstraintViolationException dup) {
+            System.out.println(dup.getMessage());
+            // username o email già esistenti
+            return false;
+        }
+    }
+
 
     public boolean insert(UserBean u) throws SQLException {
         String sql = "INSERT INTO users(username,email,password_hash, name, surname, address, birth_date, money) VALUES(?,?,?,?,?,?,?,?)";
