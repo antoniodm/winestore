@@ -5,6 +5,10 @@ import model.CartItem;
 import model.ProductBean;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class CartDao {
 
@@ -113,6 +117,13 @@ public class CartDao {
     public CartBean loadOpenCart(Long userId, String sessionToken) throws SQLException {
         try (Connection con = ConPool.getConnection()) {
             return loadOpenCart(con, userId, sessionToken);
+        }
+    }
+
+    /** Carica il carrello OPEN dell’owner (o null). */
+    public List<CartBean> loadCloseCart(Long userId) throws SQLException {
+        try (Connection con = ConPool.getConnection()) {
+            return findClosedCartsByUser(con, userId);
         }
     }
 
@@ -288,6 +299,73 @@ public class CartDao {
             }
         }
     }
+
+    public List<CartBean> findClosedCartsByUser(Connection con, long userId) throws SQLException {
+        final String sql =
+                "SELECT c.id AS cart_id, c.user_id, c.session_token, " +
+                        "       ci.product_id, ci.quantity, ci.unit_price_cents, " +
+                        "       p.name, p.description, p.origin, p.manufacturer, p.stock " +
+                        "FROM carts c " +
+                        "LEFT JOIN cart_items ci ON ci.cart_id = c.id " +
+                        "LEFT JOIN products   p  ON p.id = ci.product_id " +
+                        "WHERE c.is_open = 0 AND c.user_id = ? " +
+                        "ORDER BY c.id DESC, ci.product_id";
+
+        List<CartBean> carts = new ArrayList<>();
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int cartId = rs.getInt("cart_id");
+
+                    // cerca se questo carrello è già nella lista (solo List<>)
+                    CartBean cart = findById(carts, cartId);
+                    if (cart == null) {
+                        cart = new CartBean();
+                        cart.setId(cartId);
+                        // Se nel tuo bean hai i campi, valorizzali:
+                        // cart.setUserId(userId);
+                        // cart.setClosedAt(rs.getTimestamp("closed_at"));
+                        carts.add(cart);
+                    }
+
+                    // LEFT JOIN: se non ci sono righe nel carrello, product_id è NULL
+                    Integer pid = (Integer) rs.getInt("product_id");
+                    if (pid == null) continue;
+
+                    int qty  = rs.getInt("quantity");
+                    int unit = rs.getInt("unit_price_cents");
+
+                    ProductBean p = new ProductBean();
+                    p.setId(pid);
+                    p.setName(rs.getString("name"));
+                    p.setDescription(rs.getString("description"));
+                    p.setOrigin(rs.getString("origin"));
+                    p.setManufacturer(rs.getString("manufacturer"));
+                    p.setStock(rs.getInt("stock"));
+                    p.setPrice(unit); // snapshot al checkout
+
+                    CartItem item = new CartItem(p);
+                    item.setQuantity(qty);
+                    cart.getProducts().add(item);
+                }
+            }
+        }
+        return carts; // ordinati dal più recente grazie all'ORDER BY
+    }
+
+    // helper lineare: nessuna struttura aggiuntiva
+    private CartBean findById(List<CartBean> list, int id) {
+        for (CartBean c : list) {
+            if (c.getId() == id) return c;
+        }
+        return null;
+    }
+
+
+
+
 
 
     /** Aggiunge +1 (snapshot da products). */
