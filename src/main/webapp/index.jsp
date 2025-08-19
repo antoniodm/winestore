@@ -16,16 +16,37 @@
     </section>
     <section id="main">
         <div id="content">
-            <h3>INDEX</h3>
             <% String loginError = (String) request.getAttribute("loginError"); %>
             <% if (loginError != null) { %>
                 <%= loginError %>
             <% } else {%>
                 <% model.UserBean user = (model.UserBean) session.getAttribute("authUser"); %>
                 <% if (user != null)  { %>
-                    Ciao <%= user.getName() %> (<%= user.getUsername() %>)
-                <% } %>
+                    <h2>Benvenuto <%= user.getName() %> (<%= user.getUsername() %>) su Wine Store</h2>
+                <% } else {%>
+                    <h2>Benvenuto su Wine Store</h2>
+                <%}%>
             <% } %>
+
+            <p>
+                Scopri la nostra selezione dei migliori vini italiani e internazionali, scelti con cura
+                per offrirti solo la massima qualità. Dal Chianti al Barolo, dal Prosecco alle etichette più ricercate,
+                su Wine Store trovi la bottiglia perfetta per ogni occasione.
+            </p>
+            <p>
+                Ordina in pochi click e ricevi direttamente a casa tua, con la garanzia di un servizio rapido
+                e sicuro. Che tu sia un intenditore o un appassionato alle prime armi,
+                qui potrai trovare il vino giusto da condividere con chi ami.
+            </p>
+            <h3>Le nostre promesse</h3>
+            <ul>
+                <li>Vini certificati e garantiti</li>
+                <li>Prezzi trasparenti e convenienti</li>
+                <li>Spedizioni veloci in tutta Italia</li>
+                <li>Assistenza clienti sempre disponibile</li>
+            </ul>
+
+
         </div>
     </section>
     <aside>

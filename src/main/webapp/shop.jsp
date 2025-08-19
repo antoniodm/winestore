@@ -31,6 +31,7 @@
                     <% if (product.getImagePath() != null && !product.getImagePath().isEmpty()) { %>
                     <img src="<%= request.getContextPath() %>/image/<%= product.getImagePath() %>" alt="<%= product.getName() %>" width="160">
                     <% } %>
+                    <div class="cart_btns">
                     <button type="button" class="add_to_cart" data-id="<%= product.getId() %>">Add to cart</button>
                     <%
                         u = (model.UserBean) session.getAttribute("authUser");
@@ -46,7 +47,7 @@
                         <input type="hidden" name="prod_id" value="<%= product.getId() %>">
                         <button type="submit" id="edit_prod_btn">Modifica</button>
                     </form>
-
+                    </div>
                     <%}%>
                 </li>
                 <% } %>

@@ -1,102 +1,197 @@
-html, body {
-    height: 100%;    /* abilita l'uso di % in altezza */
-    margin: 0;
-}
-
+/* ===== Reset di base ===== */
+* { box-sizing: border-box; } /* padding e border inclusi nella larghezza */
+html, body { height: 100%; }  /* altezza base 100% */
 body {
-    display: flex;
-    flex-direction: column; /* impila header, nav, content, footer */
-    min-height: 100vh;      /* almeno tutta la finestra */
+    margin: 0; /* toglie margine default */
+    min-height: 100vh; /* occupa almeno tutta la finestra */
+    display: flex; /* attiva flexbox */
+    flex-direction: column; /* impila header, nav, contenuto, footer */
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Arial, sans-serif; /* font leggibile */
+    font-size: 16px; /* dimensione testo base */
+    line-height: 1.5; /* spaziatura righe */
+    color: #1f2328; /* colore testo */
+    background: #f6f7f9; /* sfondo pagina */
 }
 
+/* ===== Header ===== */
 header {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr; /* sinistra - centro - destra */
     align-items: center;
-    justify-content: space-between; /* banner si espande, login resta a dx */
-    padding: 0 15px;               /* 15px dai bordi schermo */
+    padding: 12px 16px;
+    background: #fff;
+    border-bottom: 2px solid #7a1c27;
 }
 
 #banner {
-    flex: 1;                        /* prende tutto lo spazio disponibile */
-    display: flex;                  /* per centrare il contenuto dentro */
-    flex-direction: column;
-    justify-content: center;        /* centratura verticale del testo */
-    align-items: center;            /* centratura orizzontale del testo */
+    grid-column: 2; /* sempre nella colonna centrale */
     text-align: center;
 }
+
+#banner h1 {
+    margin: 0;
+    font-size: 1.6rem;
+} /* titolo principale */
+
+#banner h3 {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-weight: 500;
+} /* sottotitolo */
 
 #login {
-    margin-left: 10px;              /* piccolo distacco dal banner */
+    grid-column: 3;
+    text-align: right;
 }
 
-/* menu orizzontale (ok così) */
-#menu {
-    display: flex;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    justify-content: center;
-}
-
-.content {
-    display: flex;
-    flex: 1;
-    gap: 10px; /* spazio tra le colonne */
-}
-
-#left_bar {
-    flex: 1; /* colonna piccola */
-    background: #f0f0f0;
-}
-
-#main {
-    flex: 2; /* colonna più grande */
-    background: #e0e0e0;
-}
-
-aside {
-    flex: 1; /* colonna piccola */
-    background: #d0d0d0;
-}
-
-footer {
-    background: #ccc;
-    padding: 10px;
-    text-align: center;
-}
-
-.login-form {
-    display: flex;
-    flex-direction: column;
-    max-width: 300px;
-    margin: 20px auto;
-    padding: 15px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    background: #fafafa;
-}
-
-.login-form label {
-    margin-top: 10px;
-}
-
-.login-form input {
-    padding: 8px;
-    margin-top: 5px;
-    border: 1px solid #bbb;
-    border-radius: 4px;
-}
-
-.login-form button {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #333;
-    color: white;
-    border: none;
-    border-radius: 4px;
+/* ===== Navbar ===== */
+#mainnav { background: #ffffff; border-bottom: 1px solid #e5e7eb;} /* nav con sfondo bianco */
+#nav-toggle {
+    display: none; /* bottone hamburger nascosto su desktop */
+    background: #fff;
+    border: 1px solid #d1d5db;
+    padding: 8px 12px;
+    border-radius: 8px;
     cursor: pointer;
 }
+#menu {
+    list-style: none; /* toglie pallini lista */
+    display: flex; /* menu orizzontale */
+    gap: 12px; /* spazio tra voci */
+    padding: 10px 16px; /* spaziatura interna */
+    margin: 0; /* toglie margine */
+    justify-content: center;
+}
+#menu a {
+    display: inline-block; /* link come blocchi inline */
+    padding: 8px 10px; /* spaziatura link */
+    border-radius: 8px; /* angoli arrotondati */
+    text-decoration: none; /* no sottolineatura */
+    color: #1f2328; /* colore testo */
+}
+#menu a:hover { background: #f1f5f9; } /* hover evidenziato */
+#menu a.active, #menu a[aria-current="page"] { background: #e8f0ff; color: #2563eb; } /* pagina attiva */
 
-.login-form button:hover {
-    background-color: #555;
+/* ===== Layout contenuti ===== */
+.content {
+    display: grid; /* layout a griglia */
+    grid-template-columns: 1fr 3fr 2fr; /* sinistra / centro / destra */
+    gap: 16px; /* spazi tra colonne */
+    padding: 16px; /* margini interni */
+    width: min(1280px, 100%); /* max 1100px ma adattabile */
+    margin: 0 auto; /* centrato */
+    flex: 1; /* prende tutto lo spazio rimanente */
+}
+#left_bar, #main, aside {
+    background: #ffffff; /* sfondo bianco per pannelli */
+    border: 1px solid #e5e7eb; /* bordo grigio chiaro */
+    border-radius: 10px; /* angoli arrotondati */
+    padding: 16px; /* spaziatura interna */
+    box-shadow: 0 1px 2px rgba(0,0,0,.04); /* leggerissima ombra */
+}
+
+/* ===== Footer ===== */
+footer {
+    background: #ffffff; /* sfondo bianco */
+    border-top: 1px solid #e5e7eb; /* bordo sopra */
+    color: #6b7280; /* testo grigio */
+    text-align: center; /* testo centrato */
+    padding: 12px 16px; /* spaziatura */
+}
+
+/* ===== Tipografia ===== */
+h1, h2, h3 { line-height: 1.25; margin: .4em 0 .6em; } /* titoli compatti */
+p { margin: .4em 0 .8em; } /* paragrafi */
+small { color: #6b7280; } /* testo piccolo in grigio */
+
+/* ===== Form & Bottoni ===== */
+form { display: block; } /* i form non usano grid di default */
+
+.login-form { display: grid; gap: 10px; } /* login con layout a griglia */
+.cart_btns { display: flex; gap: 8px; flex-wrap: wrap; } /* pulsanti carrello in orizzontale con spazi */
+
+label { font-weight: 600; } /* etichette evidenti */
+input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+select, textarea {
+    width: 100%; /* campi larghi tutta la form */
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fafafa;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none; /* no contorno blu default */
+    border-color: #2563eb; /* bordo blu */
+    box-shadow: 0 0 0 3px rgba(37,99,235,.15); /* alone blu chiaro */
+}
+button, input[type="submit"], .btn {
+    display: inline-block; /* bottoni inline */
+    padding: 10px 14px;
+    border: 1px solid #1f2937;
+    background: #1f2937; /* sfondo scuro */
+    color: #fff;
+    width: auto; /* larghezza in base al testo */
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+button:hover, input[type="submit"]:hover, .btn:hover { filter: brightness(.95); } /* hover più chiaro */
+button:disabled, input[type="submit"]:disabled { opacity: .6; cursor: not-allowed; } /* disabilitati */
+
+/* Varianti bottoni semplici */
+.btn-secondary {
+    background: #fff; color: #1f2937; border-color: #d1d5db;
+}
+.btn-secondary:hover { background: #f3f4f6; }
+
+/* ===== Tabelle (prodotti, carrelli, ecc.) ===== */
+table {
+    width: 100%; /* tabella piena */
+    border-collapse: collapse; /* niente spazi tra celle */
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden; /* angoli arrotondati su contenuto */
+}
+thead th {
+    background: #f3f4f6; /* sfondo intestazione */
+    color: #374151; /* testo grigio scuro */
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px solid #e5e7eb;
+}
+tbody td {
+    padding: 10px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top; /* allinea in alto */
+}
+tbody tr:hover { background: #fafafa; } /* evidenzia riga al passaggio */
+tfoot td { padding: 10px; background: #f9fafb; }
+
+/* ===== Liste generiche ===== */
+ul, ol { padding-left: 1.2rem; } /* margine liste */
+#user_menu ul { list-style: disc; } /* stile pallini */
+#user_menu li { margin: 4px 0; } /* spazi tra elementi */
+
+/* ===== Messaggi/Alert semplici ===== */
+.alert { padding: 10px 12px; border-radius: 8px; margin: 8px 0; }
+.alert-info { background: #e8f0ff; color: #1e3a8a; }     /* blu info */
+.alert-success { background: #e7f6ec; color: #065f46; }  /* verde successo */
+.alert-warn { background: #fff7ed; color: #92400e; }     /* arancio warning */
+.alert-error { background: #fee2e2; color: #991b1b; }    /* rosso errore */
+
+/* ===== Immagini ===== */
+img { max-width: 100%; height: auto; border-radius: 8px; } /* immagini fluide */
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+    .content { grid-template-columns: 1fr; } /* su schermi piccoli, una colonna sola */
+}
+
+/* Mobile navbar */
+@media (max-width: 768px) {
+    #menu { display: none; flex-direction: column; padding: 8px 16px; } /* menu nascosto su mobile */
+    #mainnav[aria-expanded="true"] #menu { display: flex; } /* se aperto, mostra menu */
+    #nav-toggle { display: inline-block; margin: 8px 16px; } /* mostra bottone hamburger */
+    #menu a { padding: 10px 12px; } /* link più comodi da cliccare */
 }
