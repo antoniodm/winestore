@@ -39,12 +39,12 @@
 
                     <form action="${pageContext.request.contextPath}/product/delete" method="post">
                         <input type="hidden" name="prod_id" value="<%= product.getId() %>">
-                        <button type="submit" class="del_prod_btn">Elimina</button>
+                        <button type="submit" id="del_prod_btn">Elimina</button>
                     </form>
 
                     <form action="${pageContext.request.contextPath}/product/edit" method="post">
                         <input type="hidden" name="prod_id" value="<%= product.getId() %>">
-                        <button type="submit" class="del_prod_btn">Modifica</button>
+                        <button type="submit" id="edit_prod_btn">Modifica</button>
                     </form>
 
                     <%}%>

@@ -74,7 +74,10 @@ public class AddProductServlet extends HttpServlet {
 
         System.out.println("NEW PROD name " + name);
 
-        new ProductDao().insert(p);
+        ProductDao productDao = new ProductDao();
+        if (productDao.insert(p)) {
+            System.out.println("PRODUCT ADDED");
+        }
 
         response.getWriter().println("Nuovo Prodotto Aggiunto");
     }

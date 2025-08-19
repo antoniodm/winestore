@@ -32,7 +32,9 @@
             <form action="<%= isEdit ? (ctx + "/product/update") : (ctx + "/product/add") %>"
                   method="post" enctype="multipart/form-data">
 
-                <% if (isEdit) { %>
+                <% if (isEdit) {
+                    session.setAttribute("prod_id", product.getId());
+                %>
                 <input type="hidden" name="id" value="<%= product.getId() %>">
                 <input type="hidden" name="current_image" value="<%= product.getImagePath() == null ? "" : product.getImagePath() %>">
                 <% } %>
@@ -68,9 +70,9 @@
                 <label><%= isEdit ? "Sostituisci immagine (opzionale)" : "Immagine (opzionale)" %></label>
                 <input type="file" name="image" accept="image/*"><br><br>
 
-                <button type="submit"><%= isEdit ? "Salva modifiche" : "Crea prodotto" %></button>
+                <button type="submit" id="add_prod_btn"><%= isEdit ? "Salva modifiche" : "Crea prodotto" %></button>
 
-                <a href="<%= ctx %>/admin/products">Annulla</a>
+                <a href="<%= ctx %>/shop.jsp">Annulla</a>
             </form>
         </div>
         <div id="responseMessage"></div>

@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     content.addEventListener('submit', async (e) => {
         const form = e.target;
         if (!(form instanceof HTMLFormElement)) return;
-        if (!e.submitter || e.submitter.id !== 'add_prod_btn') return;
+        if (!e.submitter || (e.submitter.id !== 'add_prod_btn' && e.submitter.id !== 'del_prod_btn')) return;
 
         e.preventDefault();
         if (!form.reportValidity()) return;

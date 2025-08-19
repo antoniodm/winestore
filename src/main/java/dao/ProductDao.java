@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 public class ProductDao {
 
-    public void insert(ProductBean p) {
+    public boolean insert(ProductBean p) {
         String sql = "INSERT INTO products " +
                 "(name, description, origin, manufacturer, image_path, price_cents, stock) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -23,9 +23,56 @@ public class ProductDao {
             ps.setInt(6, p.getPrice());
             ps.setInt(7, p.getStock());
 
-            ps.executeUpdate();
+            int rows = ps.executeUpdate();
+            con.commit();
+            return rows == 1;
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean update(ProductBean p) {
+        String sql = "UPDATE products SET " +
+                "name = ?, description = ?, origin = ?, manufacturer = ?, " +
+                "image_path = ?, price_cents = ?, stock = ? " +
+                "WHERE id = ?";
+
+        try (Connection con = ConPool.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, p.getName());
+            ps.setString(2, p.getDescription());
+            ps.setString(3, p.getOrigin());
+            ps.setString(4, p.getManufacturer());
+            ps.setString(5, p.getImagePath());
+            ps.setInt(6, p.getPrice());
+            ps.setInt(7, p.getStock());
+            ps.setInt(8, p.getId());
+
+            int rows = ps.executeUpdate();
+            con.commit();
+            return rows == 1;
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean remove(ProductBean p) {
+        String sql = "DELETE FROM products WHERE id = ?";
+
+        try (Connection con = ConPool.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, p.getId()); // cancella in base all'id
+
+            int rows = ps.executeUpdate();
+            con.commit();
+            return rows == 1; // true se ha eliminato 1 riga
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+            return false;
         }
     }
 
