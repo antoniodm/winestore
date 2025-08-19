@@ -6,11 +6,11 @@
   if (logged && u != null) {
 %>
 Ciao <%= u.getName() %> (<%= u.getUsername() %>)
-<a href="${pageContext.request.contextPath}/logout">Logout</a> | <a href="account.jsp">Account</a>
+<a href="${pageContext.request.contextPath}/logout">Logout</a> | <a href="${pageContext.request.contextPath}/account.jsp">Account</a>
 <%
 } else {
 %>
-<a href="login.jsp">Login</a> | <a href="signin.jsp">Registrati</a>
+<a href="${pageContext.request.contextPath}/login.jsp">Login</a> | <a href="${pageContext.request.contextPath}/signin.jsp">Registrati</a>
 <%
   }
 %>
