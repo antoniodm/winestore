@@ -1,58 +1,145 @@
+'use strict';
+
+/* ============================================================================
+ *  Cart & Content Utilities – GPT‑5 annotated version
+ *  --------------------------------------------------------------------------
+ *  Questo file gestisce:
+ *    - refresh parziale del menu utente e del contenuto centrale
+ *    - rendering del carrello (GET) e azioni sul carrello (POST)
+ *    - gestione submit di form (aggiungi/rimuovi prodotto, registrazione)
+ *    - delega di click sui pulsanti del carrello
+ *
+ *  Nota di progetto:
+ *    - Nessuna dipendenza esterna.
+ *    - Tutte le richieste sono marcate con 'X-Requested-With: XMLHttpRequest'
+ *      per permettere al backend di distinguere le risposte parziali.
+ * ============================================================================ */
+
+/**
+ * Prefisso di contesto dell’app (es. '/shop'); se window.CTX non esiste, stringa vuota.
+ * Mantiene compatibilità con ambienti dove CTX non è definito.
+ */
 const CTX = (typeof window !== 'undefined' && window.CTX) ? window.CTX : '';
 
+/* ----------------------------------------------------------------------------
+ *  Helpers DOM/HTML
+ * ---------------------------------------------------------------------------- */
+
+/**
+ * Crea un wrapper <div> con dentro l'HTML passato e ritorna l'elemento cercato.
+ * @param {string} html - stringa HTML di una pagina/fragment
+ * @param {string} selector - CSS selector dell’elemento da estrarre
+ * @returns {Element|null}
+ */
+function extractFromHTML(html, selector) {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = html;
+    return wrap.querySelector(selector);
+}
+
+/**
+ * Sostituisce l'innerHTML di un target presente nel DOM con quello “fresco”
+ * trovato nell’HTML ricevuto dal server. In caso negativo, fa fallback sul reload.
+ * @param {string} fromHtml - HTML completo o parziale ricevuto
+ * @param {string} selector - selettore dell’elemento (es. '#content')
+ */
+function swapSection(fromHtml, selector) {
+    const fresh = extractFromHTML(fromHtml, selector);
+    const target = document.querySelector(selector);
+    if (fresh && target) {
+        target.innerHTML = fresh.innerHTML;
+    } else {
+        // Se non riusciamo a trovare la sezione, facciamo un fallback sicuro.
+        window.location.reload();
+    }
+}
+
+/* ----------------------------------------------------------------------------
+ *  Fetch helpers
+ * ---------------------------------------------------------------------------- */
+
+/**
+ * Esegue una fetch e ritorna sempre il body come testo (anche in caso di errore 4xx/5xx),
+ * lasciando al chiamante la responsabilità di gestire res.ok.
+ * @param {RequestInfo} url
+ * @param {RequestInit} options
+ * @returns {Promise<{ok: boolean, status: number, text: string}>}
+ */
+async function fetchText(url, options) {
+    const res = await fetch(url, options);
+    const text = await res.text();
+    return { ok: res.ok, status: res.status, text };
+}
+
+/* ----------------------------------------------------------------------------
+ *  Refresh parziali (menu utente, contenuto pagina)
+ * ---------------------------------------------------------------------------- */
+
+/**
+ * Aggiorna la sezione #user_menu usando la versione “fresca” della pagina corrente.
+ * Se la sezione non è reperibile, ricarica l’intera pagina.
+ */
 async function refreshUserMenu() {
-    const res = await fetch(window.location.href, {
+    const { text } = await fetchText(window.location.href, {
         credentials: 'same-origin',
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
     });
-    const html = await res.text();
-    const wrap = document.createElement('div'); wrap.innerHTML = html;
-    const fresh = wrap.querySelector('#user_menu');
-    const target = document.getElementById('user_menu');
-    if (fresh && target) target.innerHTML = fresh.innerHTML; else window.location.reload();
+    swapSection(text, '#user_menu');
 }
 
+/**
+ * Aggiorna la sezione #content usando la versione “fresca” della pagina corrente.
+ * Se la sezione non è reperibile, ricarica l’intera pagina.
+ */
+async function refreshContent() {
+    const { text } = await fetchText(window.location.href, {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    swapSection(text, '#content');
+}
 
+/* ----------------------------------------------------------------------------
+ *  Carrello: render (GET) e azioni (POST)
+ * ---------------------------------------------------------------------------- */
+
+/**
+ * Carica il pannello carrello (#cart_panel) tramite GET CTX + '/cart'.
+ * In caso di errore HTTP mostra un messaggio nel pannello.
+ */
 async function renderCart() {
     const panel = document.getElementById('cart_panel');
-    if (!panel) return;
+    if (!panel) return; // la pagina potrebbe non avere il carrello
 
     try {
-        const res = await fetch(CTX + '/cart', {
+        const { ok, status, text } = await fetchText(CTX + '/cart', {
             method: 'GET',
             credentials: 'same-origin',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
 
-        if (!res.ok) {
-            panel.innerHTML = `<div class="cart-error">Errore ${res.status} caricando il carrello.</div>`;
+        if (!ok) {
+            panel.innerHTML = `<div class="cart-error">Errore ${status} caricando il carrello.</div>`;
             return;
         }
 
-        panel.innerHTML = await res.text();
+        panel.innerHTML = text;
     } catch (e) {
         panel.innerHTML = `<div class="cart-error">Errore di rete: ${e}</div>`;
     }
 }
 
-async function refreshContent() {
-    const res = await fetch(window.location.href, {
-        credentials: 'same-origin',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    });
-    const html = await res.text();
-    const wrap = document.createElement('div'); wrap.innerHTML = html;
-    const fresh = wrap.querySelector('#content');
-    const target = document.getElementById('content');
-    if (fresh && target) target.innerHTML = fresh.innerHTML; else window.location.reload();
-}
-
+/**
+ * Invia un'azione al carrello (add/remove/reset/checkout) con body urlencoded.
+ * Dopo l’aggiornamento del carrello, aggiorna anche #user_menu e #content.
+ * @param {Record<string, string|number|undefined>} bodyObj - es. { action: 'add', id: '123' }
+ */
 async function postCart(bodyObj) {
     const panel = document.getElementById('cart_panel');
     if (!panel) return;
 
     try {
-        const res = await fetch(CTX + '/cart', {
+        const { text } = await fetchText(CTX + '/cart', {
             method: 'POST',
             credentials: 'same-origin',
             headers: {
@@ -62,107 +149,137 @@ async function postCart(bodyObj) {
             body: new URLSearchParams(bodyObj)
         });
 
-        const html = await res.text();
+        // Aggiorna subito il pannello carrello con l’HTML di risposta.
+        panel.innerHTML = text;
 
-        if (!res.ok) {
-            // Non iniettare pagine intere: messaggio compatto
-            panel.innerHTML = `<div class="cart-error">Operazione non riuscita (${res.status}).</div>` + (panel.innerHTML || '');
-            return;
-        }
-
-        panel.innerHTML = html;
-
-        // checkout: opzionale, se usi l’header già impostato lato server
-        if (bodyObj.action === 'checkout' && res.headers.get('X-Checkout-Done') === '1') {
-            await renderCart(); // o tua refreshContent()
-        }
+        // Mantieni allineata la UI (es. badge carrello, totali nel content, ecc.).
         await refreshUserMenu();
+        await refreshContent();
     } catch (e) {
         panel.innerHTML = `<div class="cart-error">Errore di rete: ${e}</div>`;
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+/* ----------------------------------------------------------------------------
+ *  Event wiring (submit & click delegation)
+ * ---------------------------------------------------------------------------- */
+
+/**
+ * Gestione submit nel contenitore #content per:
+ *  - Aggiunta/Rimozione prodotti (submitter id: 'add_prod_btn' | 'del_prod_btn')
+ *  - Registrazione utente (submitter id: 'btnRegister')
+ *
+ * Nota:
+ *  - Per add/remove si invia FormData (multipart) e si rimpiazza #content con la risposta.
+ *  - Per registrazione si invia application/x-www-form-urlencoded e si scrive la risposta
+ *    in #responseMessage se presente, altrimenti rimpiazza #content.
+ */
+function attachContentSubmitHandler() {
     const content = document.getElementById('content');
     if (!content) return;
 
     content.addEventListener('submit', async (e) => {
         const form = e.target;
         if (!(form instanceof HTMLFormElement)) return;
-        if (!e.submitter || (e.submitter.id !== 'add_prod_btn' && e.submitter.id !== 'del_prod_btn')) return;
+
+        const submitter = e.submitter;
+        if (!submitter) return;
+
+        const submitId = submitter.id;
+
+        // Filtra solo i form previsti
+        const isCartAction = (submitId === 'add_prod_btn' || submitId === 'del_prod_btn');
+        const isRegister  = (submitId === 'btnRegister');
+        if (!isCartAction && !isRegister) return;
 
         e.preventDefault();
-        if (!form.reportValidity()) return;
+        if (!form.reportValidity()) return; // rispetta le constraint dei campi
 
-        const body = new FormData(form); // multipart, nessun content-type manuale!
-
-        const res = await fetch(form.action, {
-            method: (form.method || 'POST').toUpperCase(),
-            body,
-            credentials: 'same-origin',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+        try {
+            if (isCartAction) {
+                // Case: Aggiungi/Remove prodotto -> invio FormData (multipart)
+                const body = new FormData(form);
+                const res = await fetch(form.action, {
+                    method: (form.method || 'POST').toUpperCase(),
+                    body,
+                    credentials: 'same-origin',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const html = await res.text();
+                // Rimpiazza l’intero #content con quanto restituito (listing, messaggi, ecc.)
+                content.innerHTML = html;
+                return;
             }
-        });
 
-        content.innerHTML = await res.text();
-    }, true);
-});
+            if (isRegister) {
+                // Case: Registrazione -> urlencoded + scrittura su #responseMessage (se esiste)
+                const body = new URLSearchParams(new FormData(form));
+                const res = await fetch(form.action, {
+                    method: (form.method || 'POST').toUpperCase(),
+                    body,
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const html = await res.text();
+                const responseMessage = document.getElementById('responseMessage');
+                if (responseMessage) responseMessage.innerHTML = html;
+                else content.innerHTML = html;
+            }
+        } catch (err) {
+            // In caso di errore di rete mostriamo un messaggio user‑friendly in #content.
+            content.innerHTML = `<div class="error">Errore durante l'invio del form: ${err}</div>`;
+        }
+    }, true); // useCapture=true per intercettare prima di altri handler
+}
+
+/**
+ * Gestisce i click su pulsanti di carrello tramite delega sul document:
+ *  - .add_to_cart (richiede data-id)
+ *  - .remove_from_cart (richiede data-id)
+ *  - .reset_cart
+ *  - .buy_cart
+ *
+ * Costruisce il body a partire dall’azione e delega a postCart().
+ */
+function attachCartClickHandler() {
+    document.addEventListener('click', (e) => {
+        const btn = e.target && (/** @type {Element} */(e.target)).closest?.('.add_to_cart, .remove_from_cart, .reset_cart, .buy_cart');
+        if (!btn) return;
+
+        e.preventDefault();
+
+        const isAdd   = btn.classList.contains('add_to_cart');
+        const isRem   = btn.classList.contains('remove_from_cart');
+        const isReset = btn.classList.contains('reset_cart');
+        const isBuy   = btn.classList.contains('buy_cart');
+
+        const id = btn.getAttribute('data-id');
+
+        // id obbligatorio solo per add/remove
+        if ((isAdd || isRem) && !id) return;
+
+        const body =
+            isAdd   ? { action: 'add',     id } :
+                isRem   ? { action: 'remove',  id } :
+                    isReset ? { action: 'reset' } :
+                        { action: 'checkout' };
+
+        postCart(body);
+    });
+}
+
+/* ----------------------------------------------------------------------------
+ *  Bootstrap
+ * ---------------------------------------------------------------------------- */
 
 document.addEventListener('DOMContentLoaded', () => {
-    const content = document.getElementById('content');
-    if (!content) return;
+    // 1) Render iniziale del carrello se presente in pagina.
+    renderCart();
 
-    content.addEventListener('submit', async (e) => {
-        const form = e.target;
-        if (!(form instanceof HTMLFormElement)) return;
-        if (!e.submitter || e.submitter.id !== 'btnRegister') return;
-
-        e.preventDefault();
-        if (!form.reportValidity()) return;
-
-        const body = new URLSearchParams(new FormData(form));
-
-        const res = await fetch(form.action, {
-            method: (form.method || 'POST').toUpperCase(),
-            body,
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        });
-
-        const html = await res.text();
-        const responseMessage = document.getElementById('responseMessage');
-        if (responseMessage) responseMessage.innerHTML = html;
-        else content.innerHTML = html;
-    }, true);
+    // 2) Wiring degli handler su #content (submit) e su document (click carrello).
+    attachContentSubmitHandler();
+    attachCartClickHandler();
 });
-
-
-document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.add_to_cart, .remove_from_cart, .reset_cart, .buy_cart');
-    if (!btn) return;
-    e.preventDefault();
-
-    const isAdd   = btn.classList.contains('add_to_cart');
-    const isRem   = btn.classList.contains('remove_from_cart');
-    const isReset = btn.classList.contains('reset_cart');
-    const isBuy   = btn.classList.contains('buy_cart');
-
-    const id = btn.dataset.id;
-
-    // l'id serve SOLO per add/remove
-    if ((isAdd || isRem) && !id) return;
-
-    const body =
-        isAdd   ? { action: 'add',    id } :
-            isRem   ? { action: 'remove', id } :
-                isReset ? { action: 'reset' } :
-                    { action: 'checkout' };
-
-    postCart(body);
-});
-
-document.addEventListener('DOMContentLoaded', renderCart);

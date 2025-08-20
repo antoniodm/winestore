@@ -24,15 +24,21 @@
             <ul class="products">
                 <% for (ProductBean product : products) { %>
                 <li>
-                    Id: <%= product.getId() %><br>
+                    <div class="product_div">
                     Name: <%= product.getName() %><br>
+                    Description: <%= product.getDescription() %><br>
+                    Manufacturer: <%= product.getManufacturer() %><br>
                     Price: <%= product.getPrice() %><br>
                     Stock: <%= product.getStock() %><br>
                     <% if (product.getImagePath() != null && !product.getImagePath().isEmpty()) { %>
                     <img src="<%= request.getContextPath() %>/image/<%= product.getImagePath() %>" alt="<%= product.getName() %>" width="160">
                     <% } %>
                     <div class="cart_btns">
+                        <% if (product.getStock() > 0) { %>
                     <button type="button" class="add_to_cart" data-id="<%= product.getId() %>">Add to cart</button>
+                        <%} else {%>
+                        <button type="button" class="empty">Out-of-stock</button>
+                        <%}%>
                     <%
                         u = (model.UserBean) session.getAttribute("authUser");
                         if (u != null && u.getUsername().equals("admin")) {
@@ -47,6 +53,7 @@
                         <input type="hidden" name="prod_id" value="<%= product.getId() %>">
                         <button type="submit" id="edit_prod_btn">Modifica</button>
                     </form>
+                    </div>
                     </div>
                     <%}%>
                 </li>

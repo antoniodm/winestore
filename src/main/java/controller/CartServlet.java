@@ -61,7 +61,9 @@ public class CartServlet extends HttpServlet {
                     dao.clearOpenCart(userId, token);
                     break;
                 case "checkout":
-
+                    if (!logged) {
+                        response.getWriter().print("<div class='cart-error'>Devi essere loggato.</div>");
+                    }
                     CartBean before = dao.loadOpenCart(userId, token);
 
                     boolean ok = dao.checkout(userId, user_money, token); // dentro fa COMMIT prima di tornare
@@ -143,9 +145,7 @@ public class CartServlet extends HttpServlet {
         }
 
         try (PrintWriter out = response.getWriter()) {
-            out.print((cart == null || cart.getProducts().isEmpty())
-                    ? "<div class='cart-empty'>Carrello vuoto</div>"
-                    : cart.printCart());
+            out.print((cart == null || cart.getProducts().isEmpty()) ? "<div class='cart-empty'>Carrello vuoto</div>" : cart.printCart());
         }
     }
 }

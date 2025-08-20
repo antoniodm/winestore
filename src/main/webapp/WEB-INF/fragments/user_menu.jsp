@@ -14,28 +14,9 @@
     <h2>Credit: ${sessionScope.authUser.money}</h2>
     <%CartDao cartDao= new CartDao();%>
     <%List<CartBean> closed_carts= cartDao.loadCloseCart(user.getId());%>
-    <h3>Storico carrelli chiusi</h3>
-    <% if (closed_carts != null && !closed_carts.isEmpty()) { %>
-    <ul>
-        <% for (CartBean oldcart : closed_carts) { %>
-        <li>
-            Carrello #<%= oldcart.getId() %><br>
-            Prodotti:
-            <ul>
-                <% for (CartItem item : oldcart.getProducts()) { %>
-                <li>
-                    <%= item.getProduct().getName() %> -
-                    Quantità: <%= item.getQuantity() %> -
-                    Prezzo unitario: <%= item.getProduct().getPrice() %>
-                </li>
-                <% } %>
-            </ul>
-        </li>
-        <% } %>
-    </ul>
-    <% } else { %>
-    <p>Nessun carrello chiuso trovato.</p>
-    <% } %>
+    <h3 id="cartsHeader" class="carts-header" aria-expanded="false">
+        <a href="${pageContext.request.contextPath}/oldcart.jsp" title="CarrelliChiusi">Carrelli chiusi (<%= closed_carts != null ? closed_carts.size() : 0 %>)</a>
+    </h3>
 <%} else {%>
     <h2>User is not logged</h2>
 <%}%>

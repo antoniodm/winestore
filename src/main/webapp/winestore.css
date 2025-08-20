@@ -1,4 +1,6 @@
-/* ===== Reset di base ===== */
+/* ===== Reset di base =====
+   Scopo: reset essenziale + base tipografica e layout a colonna.
+   Uso: globale su tutte le pagine. */
 * { box-sizing: border-box; } /* padding e border inclusi nella larghezza */
 html, body { height: 100%; }  /* altezza base 100% */
 body {
@@ -13,7 +15,9 @@ body {
     background: #f6f7f9; /* sfondo pagina */
 }
 
-/* ===== Header ===== */
+/* ===== Header =====
+   header: griglia 3 colonne (sinistra/centro/destra).
+   Usato in: WEB-INF/fragments/header.jsp (incluso in tutte le pagine). */
 header {
     display: grid;
     grid-template-columns: 1fr auto 1fr; /* sinistra - centro - destra */
@@ -23,29 +27,42 @@ header {
     border-bottom: 2px solid #7a1c27;
 }
 
+/* Blocco centrale con titolo/sottotitolo.
+   Usato in: WEB-INF/fragments/header.jsp:2 */
 #banner {
     grid-column: 2; /* sempre nella colonna centrale */
     text-align: center;
 }
 
+/* Titolo principale nel banner.
+   Usato in: WEB-INF/fragments/header.jsp (h1 dentro #banner) */
 #banner h1 {
     margin: 0;
     font-size: 1.6rem;
 } /* titolo principale */
 
+/* Sottotitolo nel banner.
+   Usato in: WEB-INF/fragments/header.jsp (h3 dentro #banner) */
 #banner h3 {
     margin: 4px 0 0;
     color: #6b7280;
     font-weight: 500;
 } /* sottotitolo */
 
+/* Colonna destra dell’header con area login/user.
+   Usato in: WEB-INF/fragments/header.jsp:6 */
 #login {
     grid-column: 3;
     text-align: right;
 }
 
-/* ===== Navbar ===== */
+/* ===== Navbar =====
+   Barra di navigazione responsive.
+   nav#mainnav usato in: WEB-INF/fragments/navbar.jsp:2 */
 #mainnav { background: #ffffff; border-bottom: 1px solid #e5e7eb;} /* nav con sfondo bianco */
+
+/* Bottone hamburger (mobile).
+   Usato in: WEB-INF/fragments/navbar.jsp:4 */
 #nav-toggle {
     display: none; /* bottone hamburger nascosto su desktop */
     background: #fff;
@@ -54,6 +71,9 @@ header {
     border-radius: 8px;
     cursor: pointer;
 }
+
+/* Lista delle voci di menu (orizzontale su desktop).
+   Usato in: WEB-INF/fragments/navbar.jsp:6 */
 #menu {
     list-style: none; /* toglie pallini lista */
     display: flex; /* menu orizzontale */
@@ -62,6 +82,9 @@ header {
     margin: 0; /* toglie margine */
     justify-content: center;
 }
+
+/* Link del menu.
+   Usato in: WEB-INF/fragments/navbar.jsp (ancore dentro #menu) */
 #menu a {
     display: inline-block; /* link come blocchi inline */
     padding: 8px 10px; /* spaziatura link */
@@ -69,19 +92,31 @@ header {
     text-decoration: none; /* no sottolineatura */
     color: #1f2328; /* colore testo */
 }
-#menu a:hover { background: #f1f5f9; } /* hover evidenziato */
-#menu a.active, #menu a[aria-current="page"] { background: #e8f0ff; color: #2563eb; } /* pagina attiva */
 
-/* ===== Layout contenuti ===== */
+
+/* ===== Layout contenuti =====
+   Griglia 3 colonne: sidebar sinistra (#left_bar), contenuto centrale (#main),
+   sidebar destra (<aside>).
+   .content usato in:
+     index.jsp:13, about.jsp:13, account.jsp:13, oldcart.jsp:14, login.jsp:13,
+     map.jsp:14, shop.jsp:14, editproducts.jsp:20, signin.jsp:15 */
 .content {
     display: grid; /* layout a griglia */
     grid-template-columns: 1fr 3fr 2fr; /* sinistra / centro / destra */
     gap: 16px; /* spazi tra colonne */
     padding: 16px; /* margini interni */
-    width: min(1280px, 100%); /* max 1100px ma adattabile */
+    width: min(1280px, 100%); /* max 1280px ma adattabile */
     margin: 0 auto; /* centrato */
     flex: 1; /* prende tutto lo spazio rimanente */
 }
+
+/* Pannelli della griglia:
+   #left_bar usato in: index.jsp:14, about.jsp:14, account.jsp:14, oldcart.jsp:15, login.jsp:14,
+                       map.jsp:15, shop.jsp:15, editproducts.jsp:21, signin.jsp:16
+   #main      usato in: index.jsp:17, about.jsp:17, account.jsp:17, oldcart.jsp:18, login.jsp:17,
+                       map.jsp:18, shop.jsp:18, editproducts.jsp:24, signin.jsp:19
+   aside      usato in: index.jsp:52, about.jsp:38, account.jsp:100, oldcart.jsp:60, login.jsp:30,
+                       map.jsp:23, shop.jsp:65, editproducts.jsp:88, signin.jsp:102 */
 #left_bar, #main, aside {
     background: #ffffff; /* sfondo bianco per pannelli */
     border: 1px solid #e5e7eb; /* bordo grigio chiaro */
@@ -90,7 +125,9 @@ header {
     box-shadow: 0 1px 2px rgba(0,0,0,.04); /* leggerissima ombra */
 }
 
-/* ===== Footer ===== */
+/* ===== Footer =====
+   Footer a tutta larghezza.
+   Usato in: WEB-INF/fragments/footer.jsp:1 */
 footer {
     background: #ffffff; /* sfondo bianco */
     border-top: 1px solid #e5e7eb; /* bordo sopra */
@@ -99,18 +136,29 @@ footer {
     padding: 12px 16px; /* spaziatura */
 }
 
-/* ===== Tipografia ===== */
+/* ===== Tipografia =====
+   Scopo: spaziatura coerente dei testi.
+   Uso: globale. */
 h1, h2, h3 { line-height: 1.25; margin: .4em 0 .6em; } /* titoli compatti */
 p { margin: .4em 0 .8em; } /* paragrafi */
 small { color: #6b7280; } /* testo piccolo in grigio */
 
-/* ===== Form & Bottoni ===== */
+/* ===== Form & Bottoni =====
+   Regole di base per form e campi.
+   form: presente in varie pagine (login.jsp, signin.jsp, editproducts.jsp, shop.jsp, ecc.). */
 form { display: block; } /* i form non usano grid di default */
 
-.login-form { display: grid; gap: 10px; } /* login con layout a griglia */
+
+/* Contenitore pulsanti carrello in orizzontale.
+   Usato in: shop.jsp:36 */
 .cart_btns { display: flex; gap: 8px; flex-wrap: wrap; } /* pulsanti carrello in orizzontale con spazi */
 
+/* Etichette più evidenti.
+   Uso: globale dove presenti <label>. */
 label { font-weight: 600; } /* etichette evidenti */
+
+/* Campi di input/select/textarea uniformati.
+   Uso: globale in tutti i form. */
 input[type="text"], input[type="email"], input[type="password"], input[type="number"],
 select, textarea {
     width: 100%; /* campi larghi tutta la form */
@@ -119,11 +167,18 @@ select, textarea {
     border-radius: 8px;
     background: #fafafa;
 }
+
+/* Focus accessibile con alone blu.
+   Uso: globale. */
 input:focus, select:focus, textarea:focus {
     outline: none; /* no contorno blu default */
     border-color: #2563eb; /* bordo blu */
     box-shadow: 0 0 0 3px rgba(37,99,235,.15); /* alone blu chiaro */
 }
+
+/* Stile pulsanti generico:
+   - button, input[type=submit] presenti un po’ ovunque (submit in form).
+   - .btn: **non usata** (nessun elemento con class="btn"). */
 button, input[type="submit"], .btn {
     display: inline-block; /* bottoni inline */
     padding: 10px 14px;
@@ -138,57 +193,45 @@ button, input[type="submit"], .btn {
 button:hover, input[type="submit"]:hover, .btn:hover { filter: brightness(.95); } /* hover più chiaro */
 button:disabled, input[type="submit"]:disabled { opacity: .6; cursor: not-allowed; } /* disabilitati */
 
-/* Varianti bottoni semplici */
+/* Varianti bottoni semplici.
+   .btn-secondary: **non usata** (nessun class="btn-secondary"). */
 .btn-secondary {
     background: #fff; color: #1f2937; border-color: #d1d5db;
 }
 .btn-secondary:hover { background: #f3f4f6; }
 
-/* ===== Tabelle (prodotti, carrelli, ecc.) ===== */
-table {
-    width: 100%; /* tabella piena */
-    border-collapse: collapse; /* niente spazi tra celle */
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    overflow: hidden; /* angoli arrotondati su contenuto */
-}
-thead th {
-    background: #f3f4f6; /* sfondo intestazione */
-    color: #374151; /* testo grigio scuro */
-    text-align: left;
-    padding: 10px;
-    border-bottom: 1px solid #e5e7eb;
-}
-tbody td {
-    padding: 10px;
-    border-bottom: 1px solid #f1f5f9;
-    vertical-align: top; /* allinea in alto */
-}
-tbody tr:hover { background: #fafafa; } /* evidenzia riga al passaggio */
-tfoot td { padding: 10px; background: #f9fafb; }
-
-/* ===== Liste generiche ===== */
+/* ===== Liste generiche =====
+   Padding standard per liste; menu utente con pallini.
+   #user_menu usato in:
+     WEB-INF/fragments/user_menu.jsp:3, oldcart.jsp:19 */
 ul, ol { padding-left: 1.2rem; } /* margine liste */
 #user_menu ul { list-style: disc; } /* stile pallini */
 #user_menu li { margin: 4px 0; } /* spazi tra elementi */
 
-/* ===== Messaggi/Alert semplici ===== */
+/* ===== Messaggi/Alert semplici =====
+   NOTA: tutta la famiglia .alert* è **attualmente non usata** (nessun markup con queste classi). */
 .alert { padding: 10px 12px; border-radius: 8px; margin: 8px 0; }
 .alert-info { background: #e8f0ff; color: #1e3a8a; }     /* blu info */
 .alert-success { background: #e7f6ec; color: #065f46; }  /* verde successo */
 .alert-warn { background: #fff7ed; color: #92400e; }     /* arancio warning */
 .alert-error { background: #fee2e2; color: #991b1b; }    /* rosso errore */
 
-/* ===== Immagini ===== */
+/* ===== Immagini =====
+   Immagini responsive con angoli arrotondati.
+   Uso: globale. */
 img { max-width: 100%; height: auto; border-radius: 8px; } /* immagini fluide */
 
-/* ===== Responsive ===== */
+/* ===== Responsive =====
+   Su <900px la griglia passa a una colonna.
+   Impatta tutte le pagine con .content. */
 @media (max-width: 900px) {
     .content { grid-template-columns: 1fr; } /* su schermi piccoli, una colonna sola */
 }
 
-/* Mobile navbar */
+/* Mobile navbar
+   - nasconde il menu (mostrato quando #mainnav ha aria-expanded="true")
+   - mostra il bottone hamburger.
+   Usato con: WEB-INF/fragments/navbar.jsp (id="mainnav", id="nav-toggle", id="menu"). */
 @media (max-width: 768px) {
     #menu { display: none; flex-direction: column; padding: 8px 16px; } /* menu nascosto su mobile */
     #mainnav[aria-expanded="true"] #menu { display: flex; } /* se aperto, mostra menu */

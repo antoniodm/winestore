@@ -22,7 +22,7 @@ public class ProductDao {
             ps.setString(5, p.getImagePath());
             ps.setInt(6, p.getPrice());
             ps.setInt(7, p.getStock());
-
+            System.out.println(ps);
             int rows = ps.executeUpdate();
             con.commit();
             return rows == 1;
@@ -49,11 +49,12 @@ public class ProductDao {
             ps.setInt(6, p.getPrice());
             ps.setInt(7, p.getStock());
             ps.setInt(8, p.getId());
-
+            System.out.println(ps);
             int rows = ps.executeUpdate();
             con.commit();
             return rows == 1;
         } catch (SQLException e) {
+
             System.out.println(e.getMessage());
             return false;
         }
@@ -66,8 +67,9 @@ public class ProductDao {
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setLong(1, p.getId()); // cancella in base all'id
-
+            System.out.println(ps);
             int rows = ps.executeUpdate();
+
             con.commit();
             return rows == 1; // true se ha eliminato 1 riga
         } catch (SQLException e) {
