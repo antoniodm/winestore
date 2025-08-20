@@ -16,7 +16,7 @@
         <%@ include file="/WEB-INF/fragments/user_menu.jsp" %>
     </section>
     <section id="main">
-        <div id="user_menu">
+        <div id="dynamic_content">
             <%@ page import="model.UserBean" %>
             <%@ page import="model.CartBean" %>
             <%@ page import="java.util.List" %>

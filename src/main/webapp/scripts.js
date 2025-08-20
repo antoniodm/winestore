@@ -96,7 +96,7 @@ async function refreshContent() {
         credentials: 'same-origin',
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
     });
-    swapSection(text, '#content');
+    swapSection(text, '#dynamic_content');
 }
 
 /* ----------------------------------------------------------------------------
@@ -175,7 +175,7 @@ async function postCart(bodyObj) {
  *    in #responseMessage se presente, altrimenti rimpiazza #content.
  */
 function attachContentSubmitHandler() {
-    const content = document.getElementById('content');
+    const content = document.getElementById('dynamic_content');
     if (!content) return;
 
     content.addEventListener('submit', async (e) => {
@@ -190,7 +190,9 @@ function attachContentSubmitHandler() {
         // Filtra solo i form previsti
         const isCartAction = (submitId === 'add_prod_btn' || submitId === 'del_prod_btn');
         const isRegister  = (submitId === 'btnRegister');
-        if (!isCartAction && !isRegister) return;
+        const isResurrect  = (submitId === 'recreate_prod_btn');
+
+        if (!isCartAction && !isRegister && !isResurrect) return;
 
         e.preventDefault();
         if (!form.reportValidity()) return; // rispetta le constraint dei campi
@@ -211,7 +213,7 @@ function attachContentSubmitHandler() {
                 return;
             }
 
-            if (isRegister) {
+            if (isRegister || isResurrect) {
                 // Case: Registrazione -> urlencoded + scrittura su #responseMessage (se esiste)
                 const body = new URLSearchParams(new FormData(form));
                 const res = await fetch(form.action, {
@@ -225,9 +227,15 @@ function attachContentSubmitHandler() {
                 });
                 const html = await res.text();
                 const responseMessage = document.getElementById('responseMessage');
-                if (responseMessage) responseMessage.innerHTML = html;
-                else content.innerHTML = html;
+                if (isResurrect) {
+                    await refreshContent();
+                } else {
+                    if (responseMessage) responseMessage.innerHTML = html;
+                    else content.innerHTML = html;
+                }
             }
+
+
         } catch (err) {
             // In caso di errore di rete mostriamo un messaggio user‑friendly in #content.
             content.innerHTML = `<div class="error">Errore durante l'invio del form: ${err}</div>`;
@@ -246,7 +254,7 @@ function attachContentSubmitHandler() {
  */
 function attachCartClickHandler() {
     document.addEventListener('click', (e) => {
-        const btn = e.target && (/** @type {Element} */(e.target)).closest?.('.add_to_cart, .remove_from_cart, .reset_cart, .buy_cart');
+        const btn = e.target && ((e.target)).closest?.('.add_to_cart, .remove_from_cart, .reset_cart, .buy_cart');
         if (!btn) return;
 
         e.preventDefault();

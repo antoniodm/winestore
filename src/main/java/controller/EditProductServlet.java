@@ -14,7 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
-@WebServlet(name = "EditProductServlet", urlPatterns = {"/product/update", "/product/edit", "/product/delete"})
+@WebServlet(name = "EditProductServlet", urlPatterns = {"/product/update", "/product/edit", "/product/delete" , "/product/resurrect"})
 @MultipartConfig(
         fileSizeThreshold = 1_000_000,    // 1MB buffer
         maxFileSize = 5_000_000L,         // 5MB
@@ -33,12 +33,25 @@ public class EditProductServlet extends HttpServlet {
         boolean is_edit =   "/product/edit".equals(request.getServletPath());
         boolean is_delete = "/product/delete".equals(request.getServletPath());
         boolean is_update = "/product/update".equals(request.getServletPath());
+        boolean is_resurrect = "/product/resurrect".equals(request.getServletPath());
 
-        if (!is_edit && !is_delete && !is_update) { return; }
+        if (!is_edit && !is_delete && !is_update && !is_resurrect) { return; }
 
 
 
-        System.out.println("Called product edit servlet " + " edit: " + is_edit + " delete: " + is_delete + " update: " + is_update);
+        System.out.println("Called product edit servlet " + " edit: " + is_edit + " delete: " + is_delete + " update: " + is_update + " resurrect: " + is_resurrect);
+
+        if (is_resurrect) {
+            String[] product_ids = request.getParameterValues("resurrect_id");
+            if (product_ids != null && product_ids.length > 0) {
+                ProductDao prod = new ProductDao();
+                if (prod.resurrect(product_ids)) {
+                    for (String product_id : product_ids) {
+                        response.getWriter().println("Prodotto Resuscitato: " + product_id);
+                    }
+                }
+            }
+        }
 
         if (is_edit) {
             String product_id = request.getParameter("prod_id");
@@ -60,7 +73,7 @@ public class EditProductServlet extends HttpServlet {
             String product_id = request.getParameter("prod_id");
             ProductBean prod = new ProductDao().doRetrieveById(Integer.parseInt(product_id));
             ProductDao productDao = new ProductDao();
-            System.out.println("Called product delete servlet isDelete: " +  prod.getName());
+            System.out.println("Called product delete servlet isDelete: " +  prod.getName() + " | " + prod.getId());
             if (productDao.remove(prod) ) {
                 response.getWriter().println("Prodotto Rimosso: " + prod.getName());
             } else {

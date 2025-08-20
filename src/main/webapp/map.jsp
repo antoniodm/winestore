@@ -16,7 +16,7 @@
         <%@ include file="/WEB-INF/fragments/user_menu.jsp" %>
     </section>
     <section id="main">
-        <div id="content">
+        <div id="dynamic_content">
             <h3>MAP</h3>
         </div>
     </section>

@@ -17,7 +17,7 @@
         <%@ include file="/WEB-INF/fragments/user_menu.jsp" %>
     </section>
     <section id="main">
-        <div id="content">
+        <div id="dynamic_content">
             <form id="signin_form" action="${pageContext.request.contextPath}/account/signin" method="post" target="_self">
                     <fieldset>
                         <legend>Registrazione utente</legend>

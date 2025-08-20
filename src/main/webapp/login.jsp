@@ -15,7 +15,7 @@
       <%@ include file="/WEB-INF/fragments/user_menu.jsp" %>
   </section>
   <section id="main">
-    <div id="content">
+    <div id="dynamic_content">
         <form id="login-form" name="login-form" method="POST" action="${pageContext.request.contextPath}/login">
           <label for="username">Username</label>
           <input type="text" id="username" name="username" required>

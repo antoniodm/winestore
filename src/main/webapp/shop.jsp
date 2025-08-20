@@ -16,13 +16,16 @@
         <%@ include file="/WEB-INF/fragments/user_menu.jsp" %>
     </section>
     <section id="main">
-        <div id="content">
+        <div id="dynamic_content">
             <h3>SHOP</h3>
             <%@ page import="java.util.List, model.ProductBean"%>
             <% List<ProductBean> products = (List<ProductBean>) request.getAttribute("products"); %>
             <% if (products != null) { %>
             <ul class="products">
-                <% for (ProductBean product : products) { %>
+                <% for (ProductBean product : products) {
+                    if (!product.is_removed()) {
+                %>
+
                 <li>
                     <div class="product_div">
                     Name: <%= product.getName() %><br>
@@ -56,6 +59,8 @@
                     </div>
                     </div>
                     <%}%>
+                    <%}%>
+
                 </li>
                 <% } %>
             </ul>

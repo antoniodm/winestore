@@ -1,4 +1,5 @@
 <%@ page import="model.UserBean, model.ProductBean" %>
+<%@ page import="dao.ProductDao" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <!DOCTYPE html>
 <html>
@@ -23,10 +24,11 @@
     </section>
 
     <section id="main">
+        <div id="dynamic_content">
         <%
             if (userNav != null && "admin".equals(userNav.getUsername())) {
         %>
-        <div id="content">
+
             <h3><%= isEdit ? "Modifica prodotto" : "Nuovo prodotto" %></h3>
 
             <form action="<%= isEdit ? (ctx + "/product/update") : (ctx + "/product/add") %>"
@@ -74,15 +76,38 @@
 
                 <a href="<%= ctx %>/shop.jsp">Annulla</a>
             </form>
-        </div>
+
+
+
+        <% if (!isEdit) {
+            ProductDao productDao = new ProductDao();
+            List<ProductBean> removed_products = productDao.doRetrieveAllRemoved();
+            if (removed_products != null && !removed_products.isEmpty()) {
+                %>
+            <br>
+            <form action="${pageContext.request.contextPath}/product/resurrect" method="post">
+        <%
+                for (ProductBean removed_p : removed_products) {
+        %>
+        <input type="checkbox" id="<%= removed_p.getId()%>" name="resurrect_id" value="<%= removed_p.getId()%>">
+        <label for="<%= removed_p.getId()%>"><%= removed_p.getName()%></label><br>
+        <%}%>
+        <button type="submit" id="recreate_prod_btn">Resuscita selezionati</button>
+        <%}
+        %>
+            </form>
+        <%
+        }%>
+
         <div id="responseMessage"></div>
         <%
         } else {
         %>
-        <div id="content"><h3>NON SEI AUTORIZZATO</h3></div>
+        <h3>NON SEI AUTORIZZATO</h3>
         <%
             }
         %>
+        </div>
     </section>
 
     <aside>
