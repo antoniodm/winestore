@@ -1,0 +1,26 @@
+File,Tipo,Modifiche consigliate
+main/webapp/account.jsp,JSP,Rimuovere scriptlet Java (<% ... %>) e usare JSTL/EL.
+main/webapp/about.jsp,JSP,Rimuovere scriptlet Java (<% ... %>) e usare JSTL/EL.; Utilizzare Expression Language (${...}) per mostrare dati.
+main/webapp/map.jsp,JSP,Rimuovere scriptlet Java (<% ... %>) e usare JSTL/EL.; Utilizzare Expression Language (${...}) per mostrare dati.
+main/webapp/shop.jsp,JSP,Rimuovere scriptlet Java (<% ... %>) e usare JSTL/EL.
+main/webapp/index.jsp,JSP,Rimuovere scriptlet Java (<% ... %>) e usare JSTL/EL.
+main/webapp/oldcart.jsp,JSP,Rimuovere scriptlet Java (<% ... %>) e usare JSTL/EL.; Verificare se il file è ancora usato. Rimuoverlo se obsoleto.
+main/webapp/editproducts.jsp,JSP,Rimuovere scriptlet Java (<% ... %>) e usare JSTL/EL.
+main/webapp/signin.jsp,JSP,Rimuovere scriptlet Java (<% ... %>) e usare JSTL/EL.
+main/webapp/login.jsp,JSP,Rimuovere scriptlet Java (<% ... %>) e usare JSTL/EL.
+main/webapp/WEB-INF/fragments/footer.jsp,JSP,Utilizzare Expression Language (${...}) per mostrare dati.
+main/webapp/WEB-INF/fragments/cart.jsp,JSP,Utilizzare Expression Language (${...}) per mostrare dati.
+main/webapp/WEB-INF/fragments/user_menu.jsp,JSP,Rimuovere scriptlet Java (<% ... %>) e usare JSTL/EL.
+main/webapp/WEB-INF/fragments/closed_carts.jsp,JSP,Utilizzare Expression Language (${...}) per mostrare dati.
+main/java/controller/ShopServlet.java,Servlet,Aggiungere controllo autenticazione con AuthUtil.
+main/java/controller/CartServlet.java,Servlet,Spostare l'output HTML su una JSP tramite forward.; Aggiungere un redirect o forward dopo l'elaborazione per evitare ambiguità.
+main/java/controller/ImageServlet.java,Servlet,Aggiungere un redirect o forward dopo l'elaborazione per evitare ambiguità.
+main/java/controller/EditProductServlet.java,Servlet,Spostare l'output HTML su una JSP tramite forward.
+main/java/controller/LoginServlet.java,Servlet,Spostare l'output HTML su una JSP tramite forward.; Aggiungere controllo autenticazione con AuthUtil.
+main/java/controller/LogoutServlet.java,Servlet,Aggiungere controllo autenticazione con AuthUtil.
+main/java/controller/AddProductServlet.java,Servlet,Spostare l'output HTML su una JSP tramite forward.; Aggiungere un redirect o forward dopo l'elaborazione per evitare ambiguità.
+main/java/controller/SigninServlet.java,Servlet,Spostare l'output HTML su una JSP tramite forward.; Aggiungere controllo autenticazione con AuthUtil.; Aggiungere un redirect o forward dopo l'elaborazione per evitare ambiguità.
+main/java/dao/UserDao.java,DAO,"Verificare l'utilizzo del metodo doRetrieveByInfo: se non usato, rimuoverlo."
+main/java/dao/ProductDao.java,DAO,Verificare se il metodo resurrect è utilizzato; rimuoverlo se non serve.
+main/java/dao/CartDao.java,DAO,Controllare metodi mergeAnonymousIntoUser e loadCloseCart: potrebbero essere inutilizzati.
+main/java/model/AuthUtil.java,Utility,Completare il contenuto della classe: deve offrire metodi come checkAuth(HttpServletRequest).
