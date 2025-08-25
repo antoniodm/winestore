@@ -1,23 +1,16 @@
-<%@ page import="model.UserBean, model.ProductBean" %>
-<%@ page import="dao.ProductDao" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
-    <%
-        String ctx = request.getContextPath();
-        UserBean userNav = (UserBean) session.getAttribute("authUser");
-        ProductBean product = (ProductBean) request.getAttribute("prod");
-        boolean isEdit = (product != null);
-    %>
     <title>Wine Store</title>
-    <link rel="stylesheet" type="text/css" href="<%= ctx %>/winestore.css">
-    <script> window.CTX = '<%= ctx %>'; </script>
-    <script src="<%= ctx %>/scripts.js" defer></script>
+    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/winestore.css">
+    <script>window.CTX='${pageContext.request.contextPath}';</script>
+    <script src="${pageContext.request.contextPath}/scripts.js" defer></script>
 </head>
 <body>
 <%@ include file="/WEB-INF/fragments/header.jsp" %>
 <%@ include file="/WEB-INF/fragments/navbar.jsp" %>
+
 <div class="content">
     <section id="left_bar">
         <%@ include file="/WEB-INF/fragments/user_menu.jsp" %>
@@ -25,88 +18,63 @@
 
     <section id="main">
         <div id="dynamic_content">
-        <%
-            if (userNav != null && "admin".equals(userNav.getUsername())) {
-        %>
 
-            <h3><%= isEdit ? "Modifica prodotto" : "Nuovo prodotto" %></h3>
+            <!-- Se admin: mostra form; altrimenti la servlet ti ha già mandato su unauthorized.jsp -->
+            <h3>${isEdit ? 'Modifica prodotto' : 'Nuovo prodotto'}</h3>
 
-            <form action="<%= isEdit ? (ctx + "/product/update") : (ctx + "/product/add") %>"
-                  method="post" enctype="multipart/form-data">
+            <form action="${formAction}" method="post" enctype="multipart/form-data">
+                <!-- Hidden usati in edit -->
+                <input type="hidden" name="id" value="${isEdit ? prod.id : ''}">
+                <input type="hidden" name="current_image" value="${isEdit && !empty prod.imagePath ? prod.imagePath : ''}">
 
-                <% if (isEdit) {
-                    session.setAttribute("prod_id", product.getId());
-                %>
-                <input type="hidden" name="id" value="<%= product.getId() %>">
-                <input type="hidden" name="current_image" value="<%= product.getImagePath() == null ? "" : product.getImagePath() %>">
-                <% } %>
+                <label for="name">Nome</label>
+                <input id="name" type="text" name="name" required
+                       value="${isEdit ? prod.name : ''}"><br>
 
-                <label>Nome</label>
-                <input type="text" name="name" required
-                       value="<%= isEdit ? product.getName() : "" %>"><br>
+                <label for="description">Descrizione</label>
+                <textarea id="description" name="description" required>${isEdit ? prod.description : ''}</textarea><br>
 
-                <label>Descrizione</label>
-                <textarea name="description" required><%= isEdit ? product.getDescription() : "" %></textarea><br>
+                <label for="origin">Origine</label>
+                <input id="origin" type="text" name="origin" required
+                       value="${isEdit ? prod.origin : ''}"><br>
 
-                <label>Origine</label>
-                <input type="text" name="origin" required
-                       value="<%= isEdit ? product.getOrigin() : "" %>"><br>
+                <label for="manufacturer">Produttore</label>
+                <input id="manufacturer" type="text" name="manufacturer" required
+                       value="${isEdit ? prod.manufacturer : ''}"><br>
 
-                <label>Produttore</label>
-                <input type="text" name="manufacturer" required
-                       value="<%= isEdit ? product.getManufacturer() : "" %>"><br>
+                <label for="price_cents">Prezzo (centesimi)</label>
+                <input id="price_cents" type="number" name="price_cents" required min="0"
+                       value="${isEdit ? prod.price : ''}"><br>
 
-                <label>Prezzo (centesimi)</label>
-                <input type="number" name="price_cents" required min="0"
-                       value="<%= isEdit ? product.getPrice() : "" %>"><br>
+                <label for="stock">Stock</label>
+                <input id="stock" type="number" name="stock" required min="0"
+                       value="${isEdit ? prod.stock : ''}"><br>
 
-                <label>Stock</label>
-                <input type="number" name="stock" required min="0"
-                       value="<%= isEdit ? product.getStock() : "" %>"><br>
+                <!-- Immagine attuale (solo se esiste) -->
+                <div style="${empty currentImageUrl ? 'display:none' : ''}">
+                    <p>Immagine attuale:</p>
+                    <img src="${currentImageUrl}" alt="${isEdit ? prod.name : 'Prodotto'}" width="160"><br>
+                </div>
 
-                <% if (isEdit && product.getImagePath() != null && !product.getImagePath().isEmpty()) { %>
-                <p>Immagine attuale:</p>
-                <img src="<%= ctx %>/image/<%= product.getImagePath() %>" alt="<%= product.getName() %>" width="160"><br>
-                <% } %>
+                <label for="image">${imageLabel}</label>
+                <input id="image" type="file" name="image" accept="image/*"><br><br>
 
-                <label><%= isEdit ? "Sostituisci immagine (opzionale)" : "Immagine (opzionale)" %></label>
-                <input type="file" name="image" accept="image/*"><br><br>
+                <button type="submit" id="add_prod_btn">
+                    ${isEdit ? 'Salva modifiche' : 'Crea prodotto'}
+                </button>
 
-                <button type="submit" id="add_prod_btn"><%= isEdit ? "Salva modifiche" : "Crea prodotto" %></button>
-
-                <a href="<%= ctx %>/shop.jsp">Annulla</a>
+                <a href="${pageContext.request.contextPath}/shop">Annulla</a>
             </form>
 
+            <!-- Se NON in edit, mostra elenco “resuscita” (HTML generato dalla servlet) -->
+            <div style="${isEdit ? 'display:none' : ''}">
+                <br>
+                <form action="${pageContext.request.contextPath}/product/resurrect" method="post">
+                    ${removedOptionsHtml}
+                </form>
+            </div>
 
-
-        <% if (!isEdit) {
-            ProductDao productDao = new ProductDao();
-            List<ProductBean> removed_products = productDao.doRetrieveAllRemoved();
-            if (removed_products != null && !removed_products.isEmpty()) {
-                %>
-            <br>
-            <form action="${pageContext.request.contextPath}/product/resurrect" method="post">
-        <%
-                for (ProductBean removed_p : removed_products) {
-        %>
-        <input type="checkbox" id="<%= removed_p.getId()%>" name="resurrect_id" value="<%= removed_p.getId()%>">
-        <label for="<%= removed_p.getId()%>"><%= removed_p.getName()%></label><br>
-        <%}%>
-        <button type="submit" id="recreate_prod_btn">Resuscita selezionati</button>
-        <%}
-        %>
-            </form>
-        <%
-        }%>
-
-        <div id="responseMessage"></div>
-        <%
-        } else {
-        %>
-        <h3>NON SEI AUTORIZZATO</h3>
-        <%
-            }
-        %>
+            <div id="responseMessage"></div>
         </div>
     </section>
 

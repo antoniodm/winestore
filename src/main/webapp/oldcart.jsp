@@ -1,66 +1,54 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" session="true" %>
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
     <title>Wine Store</title>
-    <link rel="stylesheet" type="text/css" href="winestore.css">
-    <script> window.CTX = '<%= request.getContextPath() %>'; </script>
-    <script src="scripts.js" defer></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/winestore.css">
+    <script>window.CTX='${pageContext.request.contextPath}';</script>
+    <script src="${pageContext.request.contextPath}/scripts.js" defer></script>
 </head>
 <body>
 <%@ include file="/WEB-INF/fragments/header.jsp" %>
 <%@ include file="/WEB-INF/fragments/navbar.jsp" %>
+
 <div class="content">
     <section id="left_bar">
         <%@ include file="/WEB-INF/fragments/user_menu.jsp" %>
     </section>
+
     <section id="main">
         <div id="dynamic_content">
-            <%@ page import="model.UserBean" %>
-            <%@ page import="model.CartBean" %>
-            <%@ page import="java.util.List" %>
-            <%@ page import="dao.CartDao" %>
-            <%@ page import="model.CartItem" %>
 
-            <% if (is_logged) {%>
-            <% UserBean user = (UserBean) session.getAttribute("authUser"); %>
-            <% CartBean cart = (CartBean) session.getAttribute("cart"); %>
-            <%CartDao cartDao= new CartDao();%>
-            <%List<CartBean> closed_carts= cartDao.loadCloseCart(user.getId());%>
-            <% if (closed_carts != null && !closed_carts.isEmpty()) { %>
-            <ul>
-                <% for (CartBean oldcart : closed_carts) { %>
-                <li>
-                    <div class="product_div">
-                    Carrello #<%= oldcart.getId() %><br>
-                    Prodotti:
-                    <ul class="old_cart_item_menu">
-                        <% for (CartItem item : oldcart.getProducts()) { %>
-                        <li>
-                            <%= item.getProduct().getName() %> -
-                            Quantità: <%= item.getQuantity() %> -
-                            Prezzo unitario: <%= item.getProduct().getPrice() %>
-                        </li>
-                        <% } %>
-                    </ul>
-                    </div>
-                </li>
-                <% } %>
-            </ul>
-            <% } else { %>
-            <p>Nessun carrello chiuso trovato.</p>
-            <% } %>
-            <%} else {%>
-            <h2>User is not logged</h2>
-            <%}%>
+            <!-- Utente NON loggato -->
+            <div style="display:${logged ? 'none' : 'block'};">
+                <h2>User is not logged</h2>
+            </div>
+
+            <!-- Utente loggato -->
+            <div style="display:${logged ? 'block' : 'none'};">
+                <h3>Storico carrelli</h3>
+
+                <!-- Lista carrelli chiusi (HTML già pronto dalla servlet) -->
+                <ul class="old_carts">
+                    ${renderedClosedCarts}
+                </ul>
+
+                <!-- Stato vuoto -->
+                <p class="empty-state" style="display:${hasClosedCarts ? 'none' : 'block'};">
+                    ${emptyMessage}
+                </p>
+            </div>
 
         </div>
     </section>
+
     <aside>
         <%@ include file="/WEB-INF/fragments/cart.jsp" %>
     </aside>
 </div>
+
 <%@ include file="/WEB-INF/fragments/footer.jsp" %>
 </body>
 </html>

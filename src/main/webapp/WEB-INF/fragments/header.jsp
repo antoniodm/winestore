@@ -4,6 +4,16 @@
   </div>
 
   <div id="login">
-    <jsp:include page="/header_login.jsp"/>
-  </div>
+    <!-- Blocco “utente loggato” -->
+    <span style="${sessionScope.logged and not empty sessionScope.authUser ? '' : 'display:none'}">
+  Ciao ${sessionScope.authUser.name} (${sessionScope.authUser.username})
+  <a href="${pageContext.request.contextPath}/logout">Logout</a> |
+  <a href="${pageContext.request.contextPath}/account.jsp">Account</a>
+</span>
+
+    <!-- Blocco “ospite” -->
+    <span style="${sessionScope.logged and not empty sessionScope.authUser ? 'display:none' : ''}">
+  <a href="${pageContext.request.contextPath}/login.jsp">Login</a> |
+  <a href="${pageContext.request.contextPath}/signin.jsp">Registrati</a>
+</span>  </div>
 </header>

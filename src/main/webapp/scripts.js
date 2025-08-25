@@ -1,7 +1,6 @@
 'use strict';
 
 /* ============================================================================
- *  Cart & Content Utilities – GPT‑5 annotated version
  *  --------------------------------------------------------------------------
  *  Questo file gestisce:
  *    - refresh parziale del menu utente e del contenuto centrale
@@ -115,7 +114,33 @@ async function renderCart() {
         const { ok, status, text } = await fetchText(CTX + '/cart', {
             method: 'GET',
             credentials: 'same-origin',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            headers: { 'X-Requested-With': 'XMLHttpRequest' ,
+                        'cart': 'open'
+            }
+        });
+
+        if (!ok) {
+            panel.innerHTML = `<div class="cart-error">Errore ${status} caricando il carrello.</div>`;
+            return;
+        }
+
+        panel.innerHTML = text;
+    } catch (e) {
+        panel.innerHTML = `<div class="cart-error">Errore di rete: ${e}</div>`;
+    }
+}
+
+async function renderClosedCart() {
+    const panel = document.getElementById('dynamic_content');
+    if (!panel) return; // la pagina potrebbe non avere il carrello
+
+    try {
+        const { ok, status, text } = await fetchText(CTX + '/cart', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest',
+                        'cart': 'close'
+                    }
         });
 
         if (!ok) {
@@ -163,6 +188,20 @@ async function postCart(bodyObj) {
 /* ----------------------------------------------------------------------------
  *  Event wiring (submit & click delegation)
  * ---------------------------------------------------------------------------- */
+
+function attachUserMenuClickHandler(){
+    const content = document.getElementById('user_menu');
+    if (!content) return;
+
+    content.addEventListener('click', (e) => {
+        const target = e.target.closest("a#closed_carts");
+        if (target) {
+            e.preventDefault();
+            renderClosedCart();
+        }
+    });
+}
+//renderClosedCart
 
 /**
  * Gestione submit nel contenitore #content per:
@@ -279,6 +318,7 @@ function attachCartClickHandler() {
     });
 }
 
+
 /* ----------------------------------------------------------------------------
  *  Bootstrap
  * ---------------------------------------------------------------------------- */
@@ -290,4 +330,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2) Wiring degli handler su #content (submit) e su document (click carrello).
     attachContentSubmitHandler();
     attachCartClickHandler();
+    attachUserMenuClickHandler();
 });

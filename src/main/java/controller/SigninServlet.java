@@ -39,6 +39,7 @@ public class SigninServlet extends HttpServlet {
         String surname = request.getParameter("cognome");
         String address = request.getParameter("indirizzo");
         String birthdate = request.getParameter("dataNascita");
+        String phone = request.getParameter("telefono");
 
         // Validazione di base (esempio)
         boolean hasError = false;
@@ -112,6 +113,7 @@ public class SigninServlet extends HttpServlet {
                     user.setSurname(surname);
                     user.setBirthdate(birthdate);
                     user.setAddress(address);
+                    user.setPhone(phone);
                     user.setMoney(0);
 
 

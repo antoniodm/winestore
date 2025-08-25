@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.sql.SQLException;
 import java.util.Base64;
+import java.util.List;
 
 @WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
 public class LoginServlet extends HttpServlet {
@@ -87,6 +88,8 @@ public class LoginServlet extends HttpServlet {
         try {
             CartBean updated = cartDao.loadOpenCart(user.getId(), null);
             session.setAttribute("cart", updated);
+            List<CartBean> closed_carts= cartDao.loadCloseCart(user.getId());
+            session.setAttribute("closed_carts", closed_carts);
         } catch (SQLException e) {
             session.setAttribute("cart", null); // non bloccare login per UI
         }

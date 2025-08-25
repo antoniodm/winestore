@@ -4,73 +4,36 @@
 <head>
     <title>Wine Store</title>
     <link rel="stylesheet" type="text/css" href="winestore.css">
-    <script> window.CTX = '<%= request.getContextPath() %>'; </script>
+    <script> window.CTX='${pageContext.request.contextPath}'; </script>
     <script src="scripts.js" defer></script>
-
 </head>
 <body>
 <%@ include file="/WEB-INF/fragments/header.jsp" %>
 <%@ include file="/WEB-INF/fragments/navbar.jsp" %>
+
 <div class="content">
     <section id="left_bar">
         <%@ include file="/WEB-INF/fragments/user_menu.jsp" %>
     </section>
+
     <section id="main">
         <div id="dynamic_content">
             <h3>SHOP</h3>
-            <%@ page import="java.util.List, model.ProductBean"%>
-            <% List<ProductBean> products = (List<ProductBean>) request.getAttribute("products"); %>
-            <% if (products != null) { %>
+
+            <!-- La servlet mette già qui dentro tutti i <li>…</li> -->
             <ul class="products">
-                <% for (ProductBean product : products) {
-                    if (!product.is_removed()) {
-                %>
-
-                <li>
-                    <div class="product_div">
-                    Name: <%= product.getName() %><br>
-                    Description: <%= product.getDescription() %><br>
-                    Manufacturer: <%= product.getManufacturer() %><br>
-                    Price: <%= product.getPrice() %><br>
-                    Stock: <%= product.getStock() %><br>
-                    <% if (product.getImagePath() != null && !product.getImagePath().isEmpty()) { %>
-                    <img src="<%= request.getContextPath() %>/image/<%= product.getImagePath() %>" alt="<%= product.getName() %>" width="160">
-                    <% } %>
-                    <div class="cart_btns">
-                        <% if (product.getStock() > 0) { %>
-                    <button type="button" class="add_to_cart" data-id="<%= product.getId() %>">Add to cart</button>
-                        <%} else {%>
-                        <button type="button" class="empty">Out-of-stock</button>
-                        <%}%>
-                    <%
-                        u = (model.UserBean) session.getAttribute("authUser");
-                        if (u != null && u.getUsername().equals("admin")) {
-                    %>
-
-                    <form action="${pageContext.request.contextPath}/product/delete" method="post">
-                        <input type="hidden" name="prod_id" value="<%= product.getId() %>">
-                        <button type="submit" id="del_prod_btn">Elimina</button>
-                    </form>
-
-                    <form action="${pageContext.request.contextPath}/product/edit" method="post">
-                        <input type="hidden" name="prod_id" value="<%= product.getId() %>">
-                        <button type="submit" id="edit_prod_btn">Modifica</button>
-                    </form>
-                    </div>
-                    </div>
-                    <%}%>
-                    <%}%>
-
-                </li>
-                <% } %>
+                ${renderedProducts}
             </ul>
-            <% } %>
+            <!-- eventuale messaggio vuoto -->
+            <div class="empty-state">${emptyMessage}</div>
         </div>
     </section>
+
     <aside>
         <%@ include file="/WEB-INF/fragments/cart.jsp" %>
     </aside>
 </div>
+
 <%@ include file="/WEB-INF/fragments/footer.jsp" %>
 </body>
 </html>

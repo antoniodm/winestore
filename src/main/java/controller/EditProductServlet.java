@@ -6,106 +6,118 @@ import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import model.ProductBean;
+import model.UserBean;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
+import java.util.List;
 
-@WebServlet(name = "EditProductServlet", urlPatterns = {"/product/update", "/product/edit", "/product/delete" , "/product/resurrect"})
+@WebServlet(
+        name = "EditProductServlet",
+        urlPatterns = {"/product/update", "/product/edit", "/product/delete", "/product/resurrect"}
+)
 @MultipartConfig(
-        fileSizeThreshold = 1_000_000,    // 1MB buffer
-        maxFileSize = 5_000_000L,         // 5MB
+        fileSizeThreshold = 1_000_000, // 1MB
+        maxFileSize = 5_000_000L,      // 5MB
         maxRequestSize = 6_000_000L
 )
-
 public class EditProductServlet extends HttpServlet {
+
     private Path imagesDir(HttpServletRequest req) {
-        // <app>/WEB-INF/images
         return Paths.get(getServletContext().getRealPath("/WEB-INF/images"));
     }
 
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        boolean is_edit =   "/product/edit".equals(request.getServletPath());
-        boolean is_delete = "/product/delete".equals(request.getServletPath());
-        boolean is_update = "/product/update".equals(request.getServletPath());
-        boolean is_resurrect = "/product/resurrect".equals(request.getServletPath());
+        String servletPath = request.getServletPath();
+        boolean isEdit      = "/product/edit".equals(servletPath);
+        boolean isDelete    = "/product/delete".equals(servletPath);
+        boolean isUpdate    = "/product/update".equals(servletPath);
+        boolean isResurrect = "/product/resurrect".equals(servletPath);
 
-        if (!is_edit && !is_delete && !is_update && !is_resurrect) { return; }
+        // --- Controllo admin (come da corso: ruoli diversi) ---
+        HttpSession session = request.getSession(true);
+        UserBean auth = (UserBean) session.getAttribute("authUser");
+        boolean isAdmin = (auth != null && "admin".equals(auth.getUsername()));
 
-
-
-        System.out.println("Called product edit servlet " + " edit: " + is_edit + " delete: " + is_delete + " update: " + is_update + " resurrect: " + is_resurrect);
-
-        if (is_resurrect) {
-            String[] product_ids = request.getParameterValues("resurrect_id");
-            if (product_ids != null && product_ids.length > 0) {
-                ProductDao prod = new ProductDao();
-                if (prod.resurrect(product_ids)) {
-                    for (String product_id : product_ids) {
-                        response.getWriter().println("Prodotto Resuscitato: " + product_id);
-                    }
-                }
-            }
+        // Se non admin: pagina "non autorizzato"
+        if ((isEdit || isUpdate || isDelete || isResurrect) && !isAdmin) {
+            request.setAttribute("title", "NON SEI AUTORIZZATO");
+            request.setAttribute("message", "Solo l’amministratore può gestire i prodotti.");
+            request.getRequestDispatcher("/WEB-INF/results/unauthorized.jsp").forward(request, response);
+            return;
         }
 
-        if (is_edit) {
-            String product_id = request.getParameter("prod_id");
-            ProductBean prod = new ProductDao().doRetrieveById(Integer.parseInt(product_id));
+        ProductDao productDao = new ProductDao();
 
-            System.out.println("Called product edit servlet isEdit");
-            if (prod.getId() > 0) {
-                System.out.println("Called product edit servlet prod: " + prod.getName());
-                request.setAttribute("prod", prod);
+        if (isResurrect) {
+            String[] ids = request.getParameterValues("resurrect_id");
+            if (ids != null && ids.length > 0) {
+                productDao.resurrect(ids);
+            }
+            response.sendRedirect(request.getContextPath() + "/shop");
+            return;
+        }
+
+        if (isDelete) {
+            String productId = request.getParameter("prod_id");
+            if (productId != null) {
+                ProductBean prod = productDao.doRetrieveById(Integer.parseInt(productId));
+                productDao.remove(prod);
+            }
+            response.sendRedirect(request.getContextPath() + "/shop");
+            return;
+        }
+
+        if (isEdit) {
+            // Carica prodotto e prepara form di modifica
+            String productId = request.getParameter("prod_id");
+            ProductBean prod = productDao.doRetrieveById(Integer.parseInt(productId));
+            if (prod != null && prod.getId() > 0) {
+                session.setAttribute("prod_id", prod.getId()); // serve per /product/update
+                prepareFormAttributes(request, true, prod);
+                // Anche la lista “rimossi” per i checkbox (renderizzata lato server)
+                request.setAttribute("removedOptionsHtml", buildRemovedCheckboxes(productDao.doRetrieveAllRemoved()));
                 request.getRequestDispatcher("/editproducts.jsp").forward(request, response);
-            } else {
-                System.out.println("Called product edit servlet prod is null");
+                return;
             }
+            // fallback
+            response.sendRedirect(request.getContextPath() + "/shop");
+            return;
         }
 
-
-
-        if (is_delete) {
-            String product_id = request.getParameter("prod_id");
-            ProductBean prod = new ProductDao().doRetrieveById(Integer.parseInt(product_id));
-            ProductDao productDao = new ProductDao();
-            System.out.println("Called product delete servlet isDelete: " +  prod.getName() + " | " + prod.getId());
-            if (productDao.remove(prod) ) {
-                response.getWriter().println("Prodotto Rimosso: " + prod.getName());
-            } else {
-                response.getWriter().println("Prodotto NON Rimosso: " + prod.getName());
+        if (isUpdate) {
+            // Prende id da sessione (come tuo codice)
+            Integer productId = (Integer) session.getAttribute("prod_id");
+            if (productId == null) {
+                response.sendRedirect(request.getContextPath() + "/shop");
+                return;
             }
-        }
+            ProductBean prod = productDao.doRetrieveById(productId);
+            if (prod == null) {
+                response.sendRedirect(request.getContextPath() + "/shop");
+                return;
+            }
 
-        if (is_update) {
-            HttpSession session = request.getSession(true);
-            Integer product_id = (Integer) session.getAttribute("prod_id");
-            System.out.println("Called product edit servlet prod: " + product_id);
-            ProductDao productDao = new ProductDao();
-            ProductBean prod = productDao.doRetrieveById(product_id);
-
-            String name = request.getParameter("name");
-            String description = request.getParameter("description");
-            String origin = request.getParameter("origin");
+            String name         = request.getParameter("name");
+            String description  = request.getParameter("description");
+            String origin       = request.getParameter("origin");
             String manufacturer = request.getParameter("manufacturer");
-            int price = Integer.parseInt(request.getParameter("price_cents"));
-            int stock = Integer.parseInt(request.getParameter("stock"));
+            int price           = Integer.parseInt(request.getParameter("price_cents"));
+            int stock           = Integer.parseInt(request.getParameter("stock"));
 
             // upload opzionale
             Part imagePart = request.getPart("image");
             String storedFileName = null;
-
             if (imagePart != null && imagePart.getSize() > 0) {
                 String mime = imagePart.getContentType();
-                if (mime == null || !(mime.startsWith("image/"))) {
+                if (mime == null || !mime.startsWith("image/")) {
                     response.sendError(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, "Formato immagine non valido");
                     return;
                 }
-
                 String original = Paths.get(imagePart.getSubmittedFileName()).getFileName().toString();
                 String base = original.replaceAll("[^a-zA-Z0-9._-]", "_");
                 String ext = base.contains(".") ? base.substring(base.lastIndexOf('.')) : "";
@@ -124,14 +136,61 @@ public class EditProductServlet extends HttpServlet {
             prod.setManufacturer(manufacturer);
             prod.setPrice(price);
             prod.setStock(stock);
-            prod.setImagePath(storedFileName); // solo nome f
-
-            System.out.println("Called product update servlet isUpdate");
-            if (productDao.update(prod)) {
-                response.getWriter().println("Prodotto Modificato: " + prod.getName());
-            } else {
-                response.getWriter().println("Prodotto NON Modificato: " + prod.getName());
+            if (storedFileName != null) {
+                prod.setImagePath(storedFileName);
             }
+
+            productDao.update(prod);
+            response.sendRedirect(request.getContextPath() + "/shop");
         }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        // Per comodità, supporta GET su /product/edit
+        if ("/product/edit".equals(req.getServletPath())) {
+            doPost(req, resp);
+            return;
+        }
+        resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+    }
+
+    private void prepareFormAttributes(HttpServletRequest request, boolean isEdit, ProductBean prod) {
+        String ctx = request.getContextPath();
+        request.setAttribute("isEdit", isEdit);
+        request.setAttribute("prod", prod);
+        // Prepara action risolta (così in JSP non componi stringhe)
+        String formAction = isEdit ? (ctx + "/product/update") : (ctx + "/product/add");
+        request.setAttribute("formAction", formAction);
+        // Etichetta per upload
+        request.setAttribute("imageLabel", isEdit ? "Sostituisci immagine (opzionale)" : "Immagine (opzionale)");
+        // URL immagine corrente (se presente)
+        String currentImgUrl = (prod != null && prod.getImagePath() != null && !prod.getImagePath().isEmpty())
+                ? (ctx + "/image/" + prod.getImagePath())
+                : "";
+        request.setAttribute("currentImageUrl", currentImgUrl);
+    }
+
+    private String buildRemovedCheckboxes(List<ProductBean> removed) {
+        if (removed == null || removed.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder();
+        for (ProductBean p : removed) {
+            sb.append("<div class=\"resurrect-row\">")
+                    .append("<input type=\"checkbox\" id=\"resurrect_").append(p.getId())
+                    .append("\" name=\"resurrect_id\" value=\"").append(p.getId()).append("\">")
+                    .append("<label for=\"resurrect_").append(p.getId()).append("\">")
+                    .append(escapeHtml(p.getName())).append("</label>")
+                    .append("</div>");
+        }
+        sb.append("<button type=\"submit\" id=\"recreate_prod_btn\">Resuscita selezionati</button>");
+        return sb.toString();
+    }
+
+    // mini-escape HTML giusto per i nomi
+    private String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace("\"", "&quot;");
     }
 }

@@ -6,7 +6,7 @@ import java.security.MessageDigest;
 import java.util.Base64;
 
 public class UserBean {
-    private String username, email, passwordHash, name, surname, birthdate, address;
+    private String username, email, passwordHash, name, surname, birthdate, address, phone;
     private long id; // BIGINT
     private int money;
 
@@ -19,6 +19,13 @@ public class UserBean {
             System.out.println("Errore nella SHA-256");
             return null;
         }
+    }
+
+    public int getPhone() {
+        return money;
+    }
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
     public int getMoney() {

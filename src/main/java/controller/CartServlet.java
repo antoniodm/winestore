@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.List;
 
 @WebServlet(name = "CartServlet", urlPatterns = {"/cart"})
 public class CartServlet extends HttpServlet {
@@ -96,6 +97,9 @@ public class CartServlet extends HttpServlet {
             CartBean updated = dao.loadOpenCart(userId, token);
             request.getSession(true).setAttribute("cart", updated);
 
+            List<CartBean> closed_carts= dao.loadCloseCart(user.getId());
+            session.setAttribute("closed_carts", closed_carts);
+
             try (PrintWriter out = response.getWriter()) {
                 out.print((updated == null || updated.getProducts().isEmpty())
                         ? "<div class='cart-empty'>Carrello vuoto</div>"
@@ -116,6 +120,23 @@ public class CartServlet extends HttpServlet {
         }
     }
 
+    public String printClosedCart(List<CartBean> closed_carts) {
+        if (closed_carts.isEmpty()) return "<div class='cart-empty'>Carrello vuoto</div>";
+        StringBuilder sb = new StringBuilder();
+        for (CartBean it : closed_carts) {
+            sb.append("<ul>");
+            List<CartItem> cart_prod = it.getProducts();
+            for (CartItem item : cart_prod) {
+                sb.append("<li>")
+                        .append(item.getQuantity()).append(" x ")
+                        .append(item.getProduct().getName());
+
+            }
+            sb.append("</ul>").append(it.getTotalCents());
+        }
+        return sb.toString();
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -132,20 +153,48 @@ public class CartServlet extends HttpServlet {
         System.out.println("token = " + token);
         System.out.println("userId = " + userId);
 
-        HttpSession session = request.getSession(true);
-        CartBean cart = (CartBean) session.getAttribute("cart");
+        try {
+            HttpSession session = request.getSession(true);
+            CartBean cart = (CartBean) session.getAttribute("cart");
+            List<CartBean> closed_carts = (List<CartBean>) session.getAttribute("closed_carts");
 
-        if (cart == null) {
-            try {
-                cart = new CartDao().loadOpenCart(userId, token);
+            CartDao cartdao = new CartDao();
+
+            if (cart == null) {
+                cartdao.loadOpenCart(userId, token);
                 session.setAttribute("cart", cart); // cache UI
-            } catch (SQLException e) {
-                throw new ServletException(e);
+            }
+
+            if (closed_carts == null) {
+                closed_carts = cartdao.loadCloseCart(userId);
+                session.setAttribute("closed_carts", closed_carts); // cache UI
+            }
+
+            String closed_cart = request.getHeader("cart");
+
+            PrintWriter out = response.getWriter();
+            if ("close".equals(closed_cart)) {
+                System.out.println("closed_carts.size(): " + closed_carts.size());
+                out.print((closed_carts == null || closed_carts.isEmpty()) ? "<div class='closed-cart-empty'>Non hai vecchi carrelli</div>" : printClosedCart(closed_carts));
+            } else {
+                out.print((cart == null || cart.getProducts().isEmpty()) ? "<div class='cart-empty'>Carrello vuoto</div>" : cart.printCart());
+            }
+
+        } catch (SQLIntegrityConstraintViolationException e) {
+            // p.es. conflitti di vincoli/duplicati
+            response.setStatus(HttpServletResponse.SC_CONFLICT); // 409
+            try (PrintWriter out = response.getWriter()) {
+                out.print("<div class='cart-error'>Operazione non valida: "
+                        + e.getMessage() + "</div>");
+            }
+        } catch (SQLException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500
+            try (PrintWriter out = response.getWriter()) {
+                out.print("<div class='cart-error'>Errore interno carrello.</div>");
             }
         }
 
-        try (PrintWriter out = response.getWriter()) {
-            out.print((cart == null || cart.getProducts().isEmpty()) ? "<div class='cart-empty'>Carrello vuoto</div>" : cart.printCart());
-        }
+
+
     }
 }

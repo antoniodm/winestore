@@ -1,32 +1,42 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
     <title>Wine Store</title>
-    <link rel="stylesheet" type="text/css" href="winestore.css">
-    <script> window.CTX = '<%= request.getContextPath() %>'; </script>
-    <script src="scripts.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/winestore.css">
+    <script>
+        window.CTX = '${pageContext.request.contextPath}';
+    </script>
+    <script src="${pageContext.request.contextPath}/scripts.js" defer></script>
 </head>
 <body>
 <%@ include file="/WEB-INF/fragments/header.jsp" %>
 <%@ include file="/WEB-INF/fragments/navbar.jsp" %>
+
 <div class="content">
     <section id="left_bar">
         <%@ include file="/WEB-INF/fragments/user_menu.jsp" %>
     </section>
+
     <section id="main">
         <div id="dynamic_content">
-            <% String loginError = (String) request.getAttribute("loginError"); %>
-            <% if (loginError != null) { %>
-                <%= loginError %>
-            <% } else {%>
-                <% model.UserBean user = (model.UserBean) session.getAttribute("authUser"); %>
-                <% if (user != null)  { %>
-                    <h2>Benvenuto <%= user.getName() %> (<%= user.getUsername() %>) su Wine Store</h2>
-                <% } else {%>
-                    <h2>Benvenuto su Wine Store</h2>
-                <%}%>
-            <% } %>
+
+            <!-- Messaggio di errore login, se presente -->
+            <div class="alert" style="${empty requestScope.loginError ? 'display:none' : ''}">
+                ${requestScope.loginError}
+            </div>
+
+            <!-- Benvenuto personalizzato se loggato e nessun errore -->
+            <h2 style="${(empty requestScope.loginError) and (not empty sessionScope.authUser) ? '' : 'display:none'}">
+                Benvenuto ${sessionScope.authUser.name} (${sessionScope.authUser.username}) su Wine Store
+            </h2>
+
+            <!-- Benvenuto generico se non loggato e nessun errore -->
+            <h2 style="${(empty requestScope.loginError) and (empty sessionScope.authUser) ? '' : 'display:none'}">
+                Benvenuto su Wine Store
+            </h2>
 
             <p>
                 Scopri la nostra selezione dei migliori vini italiani e internazionali, scelti con cura
@@ -38,6 +48,7 @@
                 e sicuro. Che tu sia un intenditore o un appassionato alle prime armi,
                 qui potrai trovare il vino giusto da condividere con chi ami.
             </p>
+
             <h3>Le nostre promesse</h3>
             <ul>
                 <li>Vini certificati e garantiti</li>
@@ -46,14 +57,14 @@
                 <li>Assistenza clienti sempre disponibile</li>
             </ul>
 
-
         </div>
     </section>
+
     <aside>
         <%@ include file="/WEB-INF/fragments/cart.jsp" %>
     </aside>
-
 </div>
+
 <%@ include file="/WEB-INF/fragments/footer.jsp" %>
 </body>
 </html>
