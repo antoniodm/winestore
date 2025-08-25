@@ -83,7 +83,14 @@ public class ShopServlet extends HttpServlet {
             request.setAttribute("emptyMessage", "Nessun prodotto disponibile al momento.");
         }
 
-        request.getRequestDispatcher("/shop.jsp").forward(request, response);
+        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"));
+        if (isAjax) {
+            // 🔹 Solo il frammento per aggiornare #dynamic_content via JS
+            request.getRequestDispatcher("/WEB-INF/fragments/product_list.jsp").forward(request, response);
+        } else {
+            // 🔹 Pagina completa con header/navbar/sidebar/footer
+            request.getRequestDispatcher("/shop.jsp").forward(request, response);
+        }
     }
 
     @Override

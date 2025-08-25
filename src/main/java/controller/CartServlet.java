@@ -36,13 +36,16 @@ public class CartServlet extends HttpServlet {
             user_money = user.getMoney();
         }
 
-        System.out.println("Cart doPost called");
+
         System.out.println("logged = " + logged);
         System.out.println("token = " + token);
         System.out.println("userId = " + userId);
         System.out.println("user_money = " + user_money);
 
         String action = request.getParameter("action");   // add | remove | clear | reset | checkout
+
+        System.out.println("Cart doPost called: " + action);
+
         int productId = -1;
         try { productId = Integer.parseInt(request.getParameter("id")); } catch (Exception ignored) {}
 
@@ -54,6 +57,7 @@ public class CartServlet extends HttpServlet {
                     dao.addOneToOpenCart(userId, token, productId);
                     break;
                 case "remove":
+                    System.out.println("DELETING PRODUCT");
                     if (productId <= 0) { response.sendError(400, "id prodotto mancante"); return; }
                     dao.decrementOrRemoveFromOpenCart(userId, token, productId);
                     break;

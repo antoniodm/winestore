@@ -1,16 +1,22 @@
 package controller;
 
+import dao.CartDao;
 import dao.ProductDao;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+import model.AuthUtil;
+import model.CartBean;
 import model.ProductBean;
 import model.UserBean;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.file.*;
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 
 @WebServlet(
@@ -43,6 +49,11 @@ public class EditProductServlet extends HttpServlet {
         UserBean auth = (UserBean) session.getAttribute("authUser");
         boolean isAdmin = (auth != null && "admin".equals(auth.getUsername()));
 
+        AuthUtil.Owner owner = AuthUtil.resolveOwner(request, response);
+        boolean logged = owner.logged;
+        Long   userId = owner.userId;
+        String token  = owner.guestToken;
+
         // Se non admin: pagina "non autorizzato"
         if ((isEdit || isUpdate || isDelete || isResurrect) && !isAdmin) {
             request.setAttribute("title", "NON SEI AUTORIZZATO");
@@ -52,6 +63,7 @@ public class EditProductServlet extends HttpServlet {
         }
 
         ProductDao productDao = new ProductDao();
+        CartDao cartDao = new CartDao();
 
         if (isResurrect) {
             String[] ids = request.getParameterValues("resurrect_id");
@@ -67,6 +79,14 @@ public class EditProductServlet extends HttpServlet {
             if (productId != null) {
                 ProductBean prod = productDao.doRetrieveById(Integer.parseInt(productId));
                 productDao.remove(prod);
+
+                try {
+                    cartDao.decrementOrRemoveFromOpenCart(userId, token, Integer.parseInt(productId));
+                    CartBean updated = cartDao.loadOpenCart(userId, token);
+                    request.getSession(true).setAttribute("cart", updated);
+                } catch (SQLException e) {
+                    System.out.println(e.getMessage());
+                }
             }
             response.sendRedirect(request.getContextPath() + "/shop");
             return;

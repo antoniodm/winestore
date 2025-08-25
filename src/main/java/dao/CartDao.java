@@ -103,6 +103,7 @@ public class CartDao {
         }
     }
 
+
     /** Svuota il carrello OPEN dell’owner. */
     public void clearOpenCart(Long userId, String sessionToken) throws SQLException {
         try (Connection con = ConPool.getConnection()) {
@@ -255,7 +256,7 @@ public class CartDao {
                         "FROM carts c " +
                         "LEFT JOIN cart_items ci ON ci.cart_id = c.id " +
                         "LEFT JOIN products p    ON p.id = ci.product_id " +
-                        "WHERE c.is_open AND " + where;
+                        "WHERE c.is_open AND p.is_removed = FALSE AND " + where;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             if (userId != null) ps.setLong(1, userId);
@@ -363,11 +364,6 @@ public class CartDao {
         return null;
     }
 
-
-
-
-
-
     /** Aggiunge +1 (snapshot da products). */
     private void addOne(Connection con, int cartId, int productId) throws SQLException {
         String sql =
@@ -381,17 +377,27 @@ public class CartDao {
         }
     }
 
-    /** Decrementa di 1; se qty diventa 0 rimuove la riga. */
     private void decrementOrRemove(Connection con, int cartId, int productId) throws SQLException {
+        // 1) prova a decrementare la quantità, ma solo se >1 e il prodotto NON è rimosso
         try (PreparedStatement ps = con.prepareStatement(
-                "UPDATE cart_items SET quantity = quantity - 1 " +
-                        "WHERE cart_id=? AND product_id=? AND quantity > 1")) {
+                "UPDATE cart_items ci " +
+                        "JOIN products p ON p.id = ci.product_id " +
+                        "SET ci.quantity = ci.quantity - 1 " +
+                        "WHERE ci.cart_id=? AND ci.product_id=? AND ci.quantity > 1 AND p.is_removed = FALSE")) {
+
             ps.setInt(1, cartId);
             ps.setInt(2, productId);
+
             int updated = ps.executeUpdate();
+
+            // 2) se non ho aggiornato nulla → cancella l’item (perché quantity=1 oppure prodotto rimosso)
             if (updated == 0) {
                 try (PreparedStatement del = con.prepareStatement(
-                        "DELETE FROM cart_items WHERE cart_id=? AND product_id=?")) {
+                        "DELETE ci FROM cart_items ci " +
+                                "JOIN products p ON p.id = ci.product_id " +
+                                "WHERE ci.cart_id=? AND ci.product_id=? " +
+                                "AND (ci.quantity <= 1 OR p.is_removed = TRUE)")) {
+
                     del.setInt(1, cartId);
                     del.setInt(2, productId);
                     del.executeUpdate();

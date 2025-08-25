@@ -249,6 +249,7 @@ function attachContentSubmitHandler() {
                 const html = await res.text();
                 // Rimpiazza l’intero #content con quanto restituito (listing, messaggi, ecc.)
                 content.innerHTML = html;
+                renderCart();
                 return;
             }
 

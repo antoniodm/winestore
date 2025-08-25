@@ -66,6 +66,7 @@ public class CartBean {
         if (items.isEmpty()) return "<div class='cart-empty'>Carrello vuoto</div>";
         StringBuilder sb = new StringBuilder("<ul>");
         for (CartItem it : items) {
+            if (it.getProduct().is_removed()) continue;
             sb.append("<li>")
                     .append(it.getProduct().getName()).append("<br>")
                     .append(it.getQuantity()).append("<br>")
