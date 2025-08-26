@@ -41,7 +41,7 @@ public class LoginServlet extends HttpServlet {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hashBytes = md.digest(password.getBytes("UTF-8"));
             password_hash = Base64.getEncoder().encodeToString(hashBytes);
-            System.out.println("Password hash: " + password_hash);
+            //System.out.println("Password hash: " + password_hash);
         } catch (Exception e) {
             System.out.println("Errore nella SHA-256");
         }

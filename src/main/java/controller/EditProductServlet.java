@@ -55,8 +55,8 @@ public class EditProductServlet extends HttpServlet {
         // Se non admin: pagina "non autorizzato"
         if ((isEdit || isUpdate || isDelete || isResurrect) && !isAdmin) {
             request.setAttribute("title", "NON SEI AUTORIZZATO");
-            request.setAttribute("message", "Solo l’amministratore può gestire i prodotti.");
-            request.getRequestDispatcher("/WEB-INF/results/unauthorized.jsp").forward(request, response);
+            request.setAttribute("error_message", "Solo l’amministratore può gestire i prodotti.");
+            request.getRequestDispatcher("/WEB-INF/fragments/error.jsp").forward(request, response);
             return;
         } else {
             System.out.println(" isEdit: " +isEdit + " isDelete: " + isDelete + " isResurrect: " + isResurrect + " isUpdate: " + isUpdate);

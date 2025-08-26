@@ -107,6 +107,7 @@ async function refreshContent() {
  * In caso di errore HTTP mostra un messaggio nel pannello.
  */
 async function renderCart() {
+    alert("renderCart");
     const panel = document.getElementById('cart_panel');
     if (!panel) return; // la pagina potrebbe non avere il carrello
 
@@ -182,14 +183,11 @@ async function postCart(bodyObj) {
             body: new URLSearchParams(bodyObj)
         });
 
-
-
         // Aggiorna subito il pannello carrello con l’HTML di risposta.
         panel.innerHTML = text;
 
         // Mantieni allineata la UI (es. badge carrello, totali nel content, ecc.).
         await refreshUserMenu();
-        await refreshContent();
     } catch (e) {
         // panel.innerHTML = `<div class="cart-error">Errore di rete: ${e}</div>`;
         alert("e.text");
@@ -260,7 +258,9 @@ function attachContentSubmitHandler() {
                 const html = await res.text();
                 // Rimpiazza l’intero #content con quanto restituito (listing, messaggi, ecc.)
                 content.innerHTML = html;
-                renderCart();
+                if (submitId === 'del_prod_btn') {
+                    renderCart();
+                }
                 return;
             }
 
@@ -341,9 +341,6 @@ function attachCartClickHandler() {
  * ---------------------------------------------------------------------------- */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1) Render iniziale del carrello se presente in pagina.
-    // renderCart();
-
     // 2) Wiring degli handler su #content (submit) e su document (click carrello).
     attachContentSubmitHandler();
     attachCartClickHandler();

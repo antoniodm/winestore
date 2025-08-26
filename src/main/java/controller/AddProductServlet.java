@@ -71,14 +71,13 @@ public class AddProductServlet extends HttpServlet {
         p.setStock(stock);
         p.setImagePath(storedFileName); // solo nome file o null
 
-        System.out.println("NEW PROD name " + name);
-
         ProductDao productDao = new ProductDao();
         if (productDao.insert(p)) {
-            System.out.println("PRODUCT ADDED");
+            request.getSession().setAttribute("error_message", "Prodotto aggiunto con successo");
+        } else {
+            request.getSession().setAttribute("error_message", "Prodotto NON aggiunto");
         }
-
-        response.getWriter().println("Nuovo Prodotto Aggiunto");
+        request.getRequestDispatcher("/WEB-INF/fragments/error.jsp").forward(request, response);
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

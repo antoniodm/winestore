@@ -59,24 +59,5 @@ public class CartBean {
         for (CartItem it : items) tot += it.getLineTotalCents();
         return tot;
     }
-    /*
-    public String printCart() {
-        if (items.isEmpty()) return "<div class='cart-empty'>Carrello vuoto</div>";
-        StringBuilder sb = new StringBuilder("<ul>");
-        for (CartItem it : items) {
-            if (it.getProduct().is_removed()) continue;
-            sb.append("<li>")
-                    .append(it.getProduct().getName()).append("<br>")
-                    .append(it.getQuantity()).append("<br>")
-                    .append("<button type=\"button\" class=\"remove_from_cart\" data-id=\"")
-                    .append(it.getProductId()).append("\">Remove</button><br>")
-                    .append(it.getLineTotalCents()).append("</li>");
-        }
-        sb.append("</ul>")
-                .append("<h3>").append(getTotalCents()).append("</h3>")
-                .append("<button type=\"button\" class=\"reset_cart\">Reset</button>")
-                .append("<button type=\"button\" class=\"buy_cart\">Buy</button>");
-        return sb.toString();
-    }
-    */
+
 }

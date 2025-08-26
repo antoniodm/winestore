@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpSession;
 import model.*;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
@@ -20,7 +19,7 @@ public class CartServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
+        System.out.println("CartServlet doPost");
         response.setContentType("text/html;charset=UTF-8");
 
         AuthUtil.Owner owner = AuthUtil.resolveOwner(request, response);
@@ -36,11 +35,12 @@ public class CartServlet extends HttpServlet {
 
         if (logged) {
             user_money = user.getMoney();
+            System.out.println("Logged");
+        } else {
+            System.out.println("Not logged");
         }
 
         String action = request.getParameter("action");   // add | remove | clear | reset | checkout
-
-        System.out.println("Cart doPost called: " + action);
 
         int productId = -1;
         try { productId = Integer.parseInt(request.getParameter("id")); } catch (Exception ignored) {}
@@ -53,7 +53,6 @@ public class CartServlet extends HttpServlet {
                     dao.addOneToOpenCart(userId, token, productId);
                     break;
                 case "remove":
-                    System.out.println("DELETING PRODUCT");
                     if (productId <= 0) { response.sendError(400, "id prodotto mancante"); return; }
                     dao.decrementOrRemoveFromOpenCart(userId, token, productId);
                     break;
@@ -64,9 +63,10 @@ public class CartServlet extends HttpServlet {
                 case "checkout":
                     if (!logged) {
                         error_message.append("Devi essere loggato");
-                        request.setAttribute("error_message", error_message.toString());
-                        request.getRequestDispatcher("/WEB-INF/fragments/error.jsp").forward(request, response);
-                        // response.getWriter().print("<div class='cart-error'>Devi essere loggato.</div>");
+                        request.setAttribute("cart_message", error_message.toString());
+                        System.out.println("ciao 1 ");
+                        request.getRequestDispatcher("/WEB-INF/fragments/cart.jsp").forward(request, response);
+                        return;
                     }
                     CartBean before = dao.loadOpenCart(userId, token);
 
@@ -74,19 +74,17 @@ public class CartServlet extends HttpServlet {
                     response.setHeader("X-Checkout-Done", "1");
 
                     if (ok) {
-                            System.out.println("Money: " + user_money + " Price: " + before.getTotalCents());
                             UserDao userDao = new UserDao();
                             if (userDao.updateCredit(userId, (user_money - before.getTotalCents()))) {
                                 user.setMoney(user_money - before.getTotalCents());
                             }
                             error_message.append("Ordine completato");
-                            error_message.append(System.lineSeparator());
-                            error_message.append("Carrello vuoto");
                     } else {
                             response.setStatus(409);
                             error_message.append("Disponibilità insufficiente.");
                             error_message.append(System.lineSeparator());
                     }
+                    break;
                 default:
                     // no-op
             }
@@ -95,38 +93,34 @@ public class CartServlet extends HttpServlet {
             CartBean updated = dao.loadOpenCart(userId, token);
             request.getSession(true).setAttribute("cart", updated);
 
-            if (updated == null || updated.getItems().isEmpty()) {
-                error_message.append("Carrello vuoto.");
-            }
-
             List<CartBean> closed_carts = null;
             if (logged) {
                 closed_carts = dao.loadCloseCart(user.getId());
             }
             session.setAttribute("closed_carts", closed_carts);
-            request.setAttribute("error_message", error_message.toString());
-
+            request.setAttribute("cart_message", error_message.toString());
+            System.out.println("END CHECKOIUT");
+            System.out.println("2");
             request.getRequestDispatcher("/WEB-INF/fragments/cart.jsp").forward(request, response);
 
         } catch (SQLIntegrityConstraintViolationException e) {
             // p.es. conflitti di vincoli/duplicati
             response.setStatus(HttpServletResponse.SC_CONFLICT); // 409
-            try (PrintWriter out = response.getWriter()) {
-                out.print("<div class='cart-error'>Operazione non valida: "
-                        + e.getMessage() + "</div>");
-            }
+            request.setAttribute("cart_message", "Operazione non valida");
+            System.out.println("3");
+            request.getRequestDispatcher("/WEB-INF/fragments/cart.jsp").forward(request, response);
         } catch (SQLException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500
-            try (PrintWriter out = response.getWriter()) {
-                out.print("<div class='cart-error'>Errore interno carrello.</div>");
-            }
+            request.setAttribute("cart_message", "Errore interno carrello");
+            System.out.println("4");
+            request.getRequestDispatcher("/WEB-INF/fragments/cart.jsp").forward(request, response);
         }
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
+        System.out.println("CartServlet doGet");
         response.setContentType("text/html;charset=UTF-8");
 
         AuthUtil.Owner owner = AuthUtil.resolveOwner(request, response);
@@ -142,7 +136,7 @@ public class CartServlet extends HttpServlet {
             CartDao cartdao = new CartDao();
 
             if (cart == null) {
-                cartdao.loadOpenCart(userId, token);
+                cart = cartdao.loadOpenCart(userId, token);
                 session.setAttribute("cart", cart); // cache UI
             }
 
@@ -150,33 +144,26 @@ public class CartServlet extends HttpServlet {
                 closed_carts = cartdao.loadCloseCart(userId);
             }
 
-            // questi header li setta il js
             String closed_cart = request.getHeader("cart");
             session.setAttribute("closed_carts", closed_carts); // cache UI
 
-            System.out.println("closed_cart.length() " + closed_cart.length());
-
             if ("close".equals(closed_cart)) {
                 if (closed_carts == null || closed_carts.isEmpty()) {
-                    request.setAttribute("error_message", "Non hai vecchi carrelli");
+                    request.setAttribute("cart_message", "Non hai vecchi carrelli");
                 }
                 request.getRequestDispatcher("/WEB-INF/fragments/closed_carts.jsp").forward(request, response);
             } else {
-                if (cart == null || cart.getItems().isEmpty()) {
-                    request.setAttribute("error_message", "Carrello vuoto");
-                }
+                System.out.println("5");
                 request.getRequestDispatcher("/WEB-INF/fragments/cart.jsp").forward(request, response);
             }
-
-
 
         } catch (SQLIntegrityConstraintViolationException e) {
             // p.es. conflitti di vincoli/duplicati
             response.setStatus(HttpServletResponse.SC_CONFLICT); // 409
-            request.setAttribute("error_message", "Operazione non valida: " + e.getMessage());
+            request.setAttribute("cart_message", "Operazione non valida: " + e.getMessage());
         } catch (SQLException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500
-            request.setAttribute("error_message", "Errore interno carrello: " + e.getMessage());
+            request.setAttribute("cart_message", "Errore interno carrello: " + e.getMessage());
         }
     }
 }

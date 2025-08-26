@@ -22,12 +22,12 @@ public class ProductDao {
             ps.setString(5, p.getImagePath());
             ps.setInt(6, p.getPrice());
             ps.setInt(7, p.getStock());
-            System.out.println(ps);
+            //System.out.println(ps);
             int rows = ps.executeUpdate();
             con.commit();
             return rows == 1;
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            //System.out.println(e.getMessage());
             return false;
         }
     }
@@ -49,13 +49,13 @@ public class ProductDao {
             for (int i = 0; i < ids.length; i++) {
                 ps.setInt(i + 1, Integer.parseInt(ids[i]));
             }
-            System.out.println(ps);
+            //System.out.println(ps);
             int rows = ps.executeUpdate();
-            System.out.println(rows + " prodotti aggiornati con successo");
+            //System.out.println(rows + " prodotti aggiornati con successo");
             con.commit();
             return true;
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            //System.out.println(e.getMessage());
             return false;
         }
     }
@@ -77,13 +77,13 @@ public class ProductDao {
             ps.setInt(6, p.getPrice());
             ps.setInt(7, p.getStock());
             ps.setInt(8, p.getId());
-            System.out.println(ps);
+            //System.out.println(ps);
             int rows = ps.executeUpdate();
             con.commit();
             return rows == 1;
         } catch (SQLException e) {
 
-            System.out.println(e.getMessage());
+            //System.out.println(e.getMessage());
             return false;
         }
     }
@@ -95,13 +95,13 @@ public class ProductDao {
 
             ps.setBoolean(1, true); // cancella in base all'id
             ps.setInt(2, p.getId()); // cancella in base all'id
-            System.out.println(ps);
+            //System.out.println(ps);
             int rows = ps.executeUpdate();
 
             con.commit();
             return rows == 1; // true se ha modificato 1 riga
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            //System.out.println(e.getMessage());
             return false;
         }
     }

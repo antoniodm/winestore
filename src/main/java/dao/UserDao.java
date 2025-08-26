@@ -80,15 +80,13 @@ public class UserDao {
             ps.setString(7, u.getBirthdate());
             ps.setLong(8, u.getId());
 
-            System.out.println(ps);
-
             int rowsUpdated = ps.executeUpdate();
 
             if (rowsUpdated > 0) return true;
 
+
             return false;
         } catch (SQLIntegrityConstraintViolationException dup) {
-            System.out.println(dup.getMessage());
             // username o email già esistenti
             return false;
         }
@@ -101,18 +99,15 @@ public class UserDao {
             ps.setInt(1, money);
             ps.setLong(2, user_id);
 
-            System.out.println(ps);
-
             int rowsUpdated = ps.executeUpdate();
 
-            System.out.println(rowsUpdated);
             if (rowsUpdated > 0) {
                 return true;
             } else {
                 return false;
             }
         } catch (SQLIntegrityConstraintViolationException dup) {
-            System.out.println(dup.getMessage());
+            //System.out.println(dup.getMessage());
             // username o email già esistenti
             return false;
         }
@@ -131,7 +126,7 @@ public class UserDao {
             ps.setString(6, u.getAddress());
             ps.setString(7, u.getBirthdate());
             ps.setInt(8, u.getMoney());
-            System.out.println(ps);
+            //System.out.println(ps);
             if (ps.executeUpdate() != 1) {
                 throw new RuntimeException("INSERT error.");
             }
@@ -142,7 +137,7 @@ public class UserDao {
 
             return true;
         } catch (SQLIntegrityConstraintViolationException dup) {
-            System.out.println(dup.getMessage());
+            //System.out.println(dup.getMessage());
             // username o email già esistenti
             return false;
         }

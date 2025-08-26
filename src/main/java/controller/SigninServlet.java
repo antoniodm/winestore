@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.security.MessageDigest;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -91,8 +90,8 @@ public class SigninServlet extends HttpServlet {
                     errorMessage.append(System.lineSeparator());
                     errorMessage.append(username);
                 } else {
-                    System.out.println(request.getServletPath());
-                    System.out.println(request.getPathInfo());
+                    //System.out.println(request.getServletPath());
+                    //System.out.println(request.getPathInfo());
                     if (user == null) {
                         user =  new UserBean();
                     }
@@ -102,10 +101,10 @@ public class SigninServlet extends HttpServlet {
                         MessageDigest md = MessageDigest.getInstance("SHA-256");
                         byte[] hashBytes = md.digest(password.getBytes("UTF-8"));
                         password_hash = Base64.getEncoder().encodeToString(hashBytes);
-                        System.out.println("Password hash: " + password_hash);
+                        //System.out.println("Password hash: " + password_hash);
                     } catch (Exception e) {
                         hasError = true;
-                        System.out.println("Errore nella SHA-256");
+                        //System.out.println("Errore nella SHA-256");
                     }
 
                     user.setUsername(username);
@@ -146,7 +145,7 @@ public class SigninServlet extends HttpServlet {
                     request.getRequestDispatcher("/WEB-INF/fragments/error.jsp").forward(request, response);
             }
         } catch (SQLException e) {
-            System.out.println("Errore nel SQL: " + e.getMessage());
+            //System.out.println("Errore nel SQL: " + e.getMessage());
 
             throw new RuntimeException(e);
         }

@@ -16,7 +16,7 @@ public class UserBean {
             byte[] hashBytes = md.digest(password.getBytes("UTF-8"));
             return Base64.getEncoder().encodeToString(hashBytes);
         } catch (Exception e) {
-            System.out.println("Errore nella SHA-256");
+            //System.out.println("Errore nella SHA-256");
             return null;
         }
     }

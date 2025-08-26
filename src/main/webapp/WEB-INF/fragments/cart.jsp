@@ -26,4 +26,6 @@
         <button type="button" class="buy_cart">Buy</button>
     </c:otherwise>
 </c:choose>
+    <br>
+    ${requestScope.cart_message}
 </div>

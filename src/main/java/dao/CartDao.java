@@ -156,7 +156,7 @@ public class CartDao {
             }
 
             if (cart.getTotalCents() > user_money ) {
-                System.out.println("No Money bro!");
+                //System.out.println("No Money bro!");
                 return false;
             }
 
