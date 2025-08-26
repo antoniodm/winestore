@@ -13,10 +13,8 @@ import model.UserBean;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.nio.file.*;
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 
 @WebServlet(
@@ -60,6 +58,8 @@ public class EditProductServlet extends HttpServlet {
             request.setAttribute("message", "Solo l’amministratore può gestire i prodotti.");
             request.getRequestDispatcher("/WEB-INF/results/unauthorized.jsp").forward(request, response);
             return;
+        } else {
+            System.out.println(" isEdit: " +isEdit + " isDelete: " + isDelete + " isResurrect: " + isResurrect + " isUpdate: " + isUpdate);
         }
 
         ProductDao productDao = new ProductDao();

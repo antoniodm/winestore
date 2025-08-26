@@ -3,14 +3,14 @@ package model;
 public class ProductBean {
     private String name, description, origin, manufacturer, imagePath;
     private int id, price, stock; // price = price_cents
-    private boolean is_removed;
+    private boolean removed;
 
-    public boolean is_removed() {
-        return is_removed;
+    public boolean isRemoved() {
+        return removed;
     }
 
-    public void set_removed(boolean is_removed) {
-        this.is_removed = is_removed;
+    public void setRemoved(boolean removed) {
+        this.removed = removed;
     }
 
     public int getId() { return id; }

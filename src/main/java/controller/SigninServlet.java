@@ -14,7 +14,6 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.Base64;
-import java.util.Random;
 
 @WebServlet(name = "SigninServlet", urlPatterns = {"/account/edit", "/account/signin"})
 public class SigninServlet extends HttpServlet {
@@ -77,18 +76,20 @@ public class SigninServlet extends HttpServlet {
             }
         }
 
-        try (PrintWriter out = response.getWriter()) {
-            if (hasError) {
-                out.println("<h3>Errori nella registrazione:</h3>");
-                out.println("<p>" + errorMessage + "</p>");
-                out.println("<a href='signin.html'>Torna al form</a>");
-            } else {
+        if (hasError) {
+            request.getSession().setAttribute("hasError", hasError);
+            request.getSession().setAttribute("error_message", errorMessage);
+            request.getRequestDispatcher("/WEB-INF/fragments/error.jsp").forward(request, response);
+        }
+
+        try {
                 UserDao service = new UserDao();
                 UserBean user = service.doRetrieveByInfo(username, email);
                 // Se voglio iscrivermi ma l'utente esiste già
                 if ((user != null) && (is_signin) ) {
-                    out.println("<h2>L'utente esiste! 1</h2>");
-                    out.println("<p>" + name + " " + surname + " (" + username + ")</p>");
+                    errorMessage.append("<h2>L'utente esiste! 1</h2>");
+                    errorMessage.append(System.lineSeparator());
+                    errorMessage.append(username);
                 } else {
                     System.out.println(request.getServletPath());
                     System.out.println(request.getPathInfo());
@@ -103,6 +104,7 @@ public class SigninServlet extends HttpServlet {
                         password_hash = Base64.getEncoder().encodeToString(hashBytes);
                         System.out.println("Password hash: " + password_hash);
                     } catch (Exception e) {
+                        hasError = true;
                         System.out.println("Errore nella SHA-256");
                     }
 
@@ -116,32 +118,36 @@ public class SigninServlet extends HttpServlet {
                     user.setPhone(phone);
                     user.setMoney(0);
 
-
+                    String usr_str = user.getName() + " " + user.getSurname() + " (" + user.getUsername() + ")";
                     if (is_signin) {
                         if ("admin".equals(username)) {
                             user.setMoney(999999);
                         }
+
                         if (service.insert(user)) {
-                            out.println("<h2>Registrazione avvenuta con successo!</h2>");
-                            request.getSession().setAttribute("authUser", user);
-                            out.println("<p>Benvenuto, " + user.getName() + " " + user.getSurname() + " (" + user.getUsername() + ")</p>");
+                            errorMessage.append("Registrazione avvenuta con successo!");
                         } else {
-                            out.println("<h2>L'utente esiste!</h2>");
-                            out.println("<p>Benvenuto, " + user.getName() + " " + user.getSurname() + " (" + user.getUsername() + ")</p>");
+                            errorMessage.append("L'utente esiste!");
                         }
-                    } else if (is_edit) {
+                    } else {
                         if (service.update(user)) {
-                            out.println("<h2>Modifica avvenuta con successo!</h2>");
-                            request.getSession().setAttribute("authUser", user);
-                            out.println("<p>Benvenuto, " + user.getName() + " " + user.getSurname() + " (" + user.getUsername() + ")</p>");
+                            errorMessage.append("Modifica avvenuta con successo!");
+
                         } else {
-                            out.println("<h2>L'utente non è stato modificato!</h2>");
-                            out.println("<p>Benvenuto, " + user.getName() + " " + user.getSurname() + " (" + user.getUsername() + ")</p>");
-                        }                    }
-                }
+                            errorMessage.append("L'utente non è stato modificato!");
+                        }
+                    }
+                    request.getSession().setAttribute("authUser", user);
+                    request.getSession().setAttribute("hasError", hasError);
+                    errorMessage.append(System.lineSeparator());
+                    errorMessage.append(usr_str);
+                    request.getSession().setAttribute("error_message", errorMessage.toString());
+
+                    request.getRequestDispatcher("/WEB-INF/fragments/error.jsp").forward(request, response);
             }
         } catch (SQLException e) {
             System.out.println("Errore nel SQL: " + e.getMessage());
+
             throw new RuntimeException(e);
         }
     }

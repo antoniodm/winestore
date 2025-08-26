@@ -120,19 +120,23 @@ async function renderCart() {
         });
 
         if (!ok) {
-            panel.innerHTML = `<div class="cart-error">Errore ${status} caricando il carrello.</div>`;
+            // panel.innerHTML = `<div class="cart-error">Errore ${status} caricando il carrello.</div>`;
             return;
         }
 
         panel.innerHTML = text;
     } catch (e) {
-        panel.innerHTML = `<div class="cart-error">Errore di rete: ${e}</div>`;
+        // panel.innerHTML = `<div class="cart-error">Errore di rete: ${e}</div>`;
     }
 }
 
 async function renderClosedCart() {
     const panel = document.getElementById('dynamic_content');
-    if (!panel) return; // la pagina potrebbe non avere il carrello
+
+    if (!panel) {
+        alert("renderClosedCart !panel");
+        return;
+    } // la pagina potrebbe non avere il carrello
 
     try {
         const { ok, status, text } = await fetchText(CTX + '/cart', {
@@ -144,12 +148,13 @@ async function renderClosedCart() {
         });
 
         if (!ok) {
-            panel.innerHTML = `<div class="cart-error">Errore ${status} caricando il carrello.</div>`;
-            return;
+            alert(status);
+            // panel.innerHTML = `<div class="cart-error">Errore ${status} caricando il carrello: ${error_msg}.</div>`;
         }
 
         panel.innerHTML = text;
     } catch (e) {
+        alert(e.text);
         panel.innerHTML = `<div class="cart-error">Errore di rete: ${e}</div>`;
     }
 }
@@ -161,7 +166,10 @@ async function renderClosedCart() {
  */
 async function postCart(bodyObj) {
     const panel = document.getElementById('cart_panel');
-    if (!panel) return;
+    if (!panel) {
+        alert("no element cart_panel");
+        return;
+    }
 
     try {
         const { text } = await fetchText(CTX + '/cart', {
@@ -174,6 +182,8 @@ async function postCart(bodyObj) {
             body: new URLSearchParams(bodyObj)
         });
 
+
+
         // Aggiorna subito il pannello carrello con l’HTML di risposta.
         panel.innerHTML = text;
 
@@ -181,7 +191,8 @@ async function postCart(bodyObj) {
         await refreshUserMenu();
         await refreshContent();
     } catch (e) {
-        panel.innerHTML = `<div class="cart-error">Errore di rete: ${e}</div>`;
+        // panel.innerHTML = `<div class="cart-error">Errore di rete: ${e}</div>`;
+        alert("e.text");
     }
 }
 
@@ -228,7 +239,7 @@ function attachContentSubmitHandler() {
 
         // Filtra solo i form previsti
         const isCartAction = (submitId === 'add_prod_btn' || submitId === 'del_prod_btn');
-        const isRegister  = (submitId === 'btnRegister');
+        const isRegister  = (submitId === 'btnRegister' || submitId === 'editAccount');
         const isResurrect  = (submitId === 'recreate_prod_btn');
 
         if (!isCartAction && !isRegister && !isResurrect) return;
@@ -266,12 +277,10 @@ function attachContentSubmitHandler() {
                     }
                 });
                 const html = await res.text();
-                const responseMessage = document.getElementById('responseMessage');
                 if (isResurrect) {
                     await refreshContent();
                 } else {
-                    if (responseMessage) responseMessage.innerHTML = html;
-                    else content.innerHTML = html;
+                    content.innerHTML = html;
                 }
             }
 
@@ -306,8 +315,15 @@ function attachCartClickHandler() {
 
         const id = btn.getAttribute('data-id');
 
+        if (!isAdd && !isRem && !isReset && !isBuy) {
+            alert("Empty action");
+        }
+
         // id obbligatorio solo per add/remove
-        if ((isAdd || isRem) && !id) return;
+        if ((isAdd || isRem) && !id) {
+            alert("((isAdd || isRem) && !id)");
+            return;
+        }
 
         const body =
             isAdd   ? { action: 'add',     id } :
@@ -326,7 +342,7 @@ function attachCartClickHandler() {
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1) Render iniziale del carrello se presente in pagina.
-    renderCart();
+    // renderCart();
 
     // 2) Wiring degli handler su #content (submit) e su document (click carrello).
     attachContentSubmitHandler();

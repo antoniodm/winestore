@@ -83,7 +83,7 @@
                     <div>
                         <label for="telefono">Telefono (opzionale)</label>
                         <input type="tel" id="telefono" name="telefono"
-                               autocomplete="tel" pattern="^[0-9+\\s()-]{6,}$" inputmode="tel">
+                               autocomplete="tel" pattern="^[0-9()+\s\-]{6,}$" inputmode="tel">
                     </div>
 
                     <div>
@@ -102,9 +102,8 @@
                 </fieldset>
             </form>
 
-            <h3>main</h3>
             <div id="responseMessage">
-                ${empty signupMessage ? '' : signupMessage}
+                ${empty errorMessage ? '' : errorMessage}
             </div>
         </div>
     </section>

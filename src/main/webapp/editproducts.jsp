@@ -66,13 +66,24 @@
                 <a href="${pageContext.request.contextPath}/shop">Annulla</a>
             </form>
 
-            <!-- Se NON in edit, mostra elenco “resuscita” (HTML generato dalla servlet) -->
-            <div style="${isEdit ? 'display:none' : ''}">
-                <br>
-                <form action="${pageContext.request.contextPath}/product/resurrect" method="post">
-                    ${removedOptionsHtml}
-                </form>
-            </div>
+            <br>
+
+            <form action="${pageContext.request.contextPath}/product/resurrect" method="post">
+                <fieldset>
+                    <legend>Prodotti rimossi</legend>
+                    <c:forEach var="product" items="${removedProducts}">
+                        <label>
+                            <input type="checkbox" name="resurrect_id" value="${product.id}" />
+                                ${product.name}
+                        </label><br>
+                    </c:forEach>
+                </fieldset>
+
+                <button type="submit" id="recreate_prod_btn">Ripristina selezionati</button>
+            </form>
+
+
+            <!--</div> -->
 
             <div id="responseMessage"></div>
         </div>

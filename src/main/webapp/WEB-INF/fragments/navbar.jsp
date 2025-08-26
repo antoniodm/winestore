@@ -10,7 +10,7 @@
 
         <!-- link admin visibile solo se utente loggato ed è "admin" -->
         <li style="${not empty sessionScope.authUser and sessionScope.authUser.username eq 'admin' ? '' : 'display:none'}">
-            <a href="${pageContext.request.contextPath}/editproducts.jsp" title="EditProducts">Add Products</a>
+            <a href="${pageContext.request.contextPath}/product/add" title="EditProducts">Add Products</a>
         </li>
     </ul>
 </nav>

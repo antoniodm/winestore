@@ -11,9 +11,7 @@ public class CartBean {
     private Long userId;           // carts.user_id (BIGINT) se loggato
     private String sessionToken;   // carts.session_token se anonimo
     private CartStatus status = CartStatus.OPEN;
-
     public enum CartStatus { OPEN, CLOSED }
-
     private final List<CartItem> items = new ArrayList<>();
 
     // --- Meta ---
@@ -30,7 +28,7 @@ public class CartBean {
     public void setStatus(CartStatus status) { this.status = status; }
 
     // --- Items ---
-    public List<CartItem> getProducts() { return items; }
+    public List<CartItem> getItems() { return items; }
 
     public void addProduct(ProductBean product) {
         for (CartItem item : items) {
@@ -61,7 +59,7 @@ public class CartBean {
         for (CartItem it : items) tot += it.getLineTotalCents();
         return tot;
     }
-
+    /*
     public String printCart() {
         if (items.isEmpty()) return "<div class='cart-empty'>Carrello vuoto</div>";
         StringBuilder sb = new StringBuilder("<ul>");
@@ -80,4 +78,5 @@ public class CartBean {
                 .append("<button type=\"button\" class=\"buy_cart\">Buy</button>");
         return sb.toString();
     }
+    */
 }

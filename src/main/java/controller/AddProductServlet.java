@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import model.ProductBean;
 
-
 import jakarta.servlet.http.*;
 import java.io.*;
 import java.nio.file.*;
@@ -80,5 +79,13 @@ public class AddProductServlet extends HttpServlet {
         }
 
         response.getWriter().println("Nuovo Prodotto Aggiunto");
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        ProductDao productDao = new ProductDao();
+        request.setAttribute("removedProducts", productDao.doRetrieveAllRemoved());
+        request.getRequestDispatcher("/editproducts.jsp").forward(request, response);
     }
 }

@@ -18,14 +18,7 @@
 
     <section id="main">
         <div id="dynamic_content">
-            <h3>SHOP</h3>
-
-            <!-- La servlet mette già qui dentro tutti i <li>…</li> -->
-            <ul class="products">
-                ${renderedProducts}
-            </ul>
-            <!-- eventuale messaggio vuoto -->
-            <div class="empty-state">${emptyMessage}</div>
+            <%@ include file="/WEB-INF/fragments/product_list.jsp" %>
         </div>
     </section>
 

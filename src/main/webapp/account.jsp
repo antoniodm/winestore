@@ -101,7 +101,7 @@
                     </div>
 
                     <!-- Invio -->
-                    <button type="submit">Modifica account</button>
+                    <button type="submit" id="editAccount">Modifica account</button>
                 </fieldset>
             </form>
 

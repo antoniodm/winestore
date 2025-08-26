@@ -6,54 +6,9 @@ import model.ProductBean;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 public class CartDao {
-
-    public static void printResult(ResultSet rs) throws SQLException {
-        if (rs == null) {
-            System.out.println("[printRS] ResultSet nullo");
-            return;
-        }
-
-        // Serve uno statement creato con TYPE_SCROLL_*:
-        // con.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
-        if (rs.getType() == ResultSet.TYPE_FORWARD_ONLY) {
-            System.out.println("[printRS] ResultSet FORWARD_ONLY: impossibile stamparlo senza consumarlo.");
-            return;
-        }
-
-        ResultSetMetaData md = rs.getMetaData();
-        int cols = md.getColumnCount();
-
-        // salva posizione corrente
-        boolean wasBeforeFirst = rs.isBeforeFirst();
-        boolean wasAfterLast   = rs.isAfterLast();
-        int currentRow         = rs.getRow(); // 0 se beforeFirst/afterLast
-
-        // vai all'inizio, stampa tutto
-        rs.beforeFirst();
-        int r = 0;
-        while (rs.next()) {
-            StringBuilder row = new StringBuilder();
-            for (int i = 1; i <= cols; i++) {
-                if (i > 1) row.append(" | ");
-                row.append(md.getColumnLabel(i)).append('=').append(rs.getObject(i));
-            }
-            System.out.println(++r + ") " + row);
-        }
-
-        // ripristina posizione
-        if (wasBeforeFirst) {
-            rs.beforeFirst();
-        } else if (wasAfterLast) {
-            rs.afterLast();
-        } else if (currentRow > 0) {
-            rs.absolute(currentRow);
-        }
-    }
 
     /** Aggiunge +1 al carrello OPEN dell’owner (crea il carrello se manca). */
     public boolean addOneToOpenCart(Long userId, String sessionToken, int productId) throws SQLException {
@@ -128,31 +83,64 @@ public class CartDao {
         }
     }
 
-    /** Ritorna l'id del carrello OPEN dell’owner, creandolo se manca. */
-    public int getOrCreateOpenCartId(Long userId, String sessionToken) throws SQLException {
+    public void mergeAnonymousIntoUser(long userId, String sessionToken) throws SQLException {
+        if (sessionToken == null || sessionToken.isBlank()) return;
+
         try (Connection con = ConPool.getConnection()) {
-            return getOrCreateOpenCartId(con, userId, sessionToken);
+            con.setAutoCommit(false);
+            try {
+                // 1) Lock dei due possibili carrelli
+                Integer anonCartId = selectOpenCartIdForUpdate(con, null, sessionToken); // carrello anonimo
+                if (anonCartId == null) {  // niente da merge-are
+                    con.commit();
+                    return;
+                }
+
+                Integer userCartId = selectOpenCartIdForUpdate(con, userId, null);       // carrello utente
+
+                if (userCartId != null) {
+                    // 2) Merge anonimo -> utente (già lockati)
+                    mergeCarts(con, anonCartId, userCartId);
+                    con.commit();
+                    return;
+                }
+
+                // 3) Nessun carrello utente aperto: prova ad agganciare l'anonimo
+                try {
+                    attachAnonymousCartToUser(con, sessionToken, userId);
+                    con.commit();
+                } catch (SQLIntegrityConstraintViolationException dup) {
+                    // 3b) Race: nel frattempo è comparso un carrello OPEN per l’utente -> rifai lock e fai merge
+                    Integer nowUserCartId = selectOpenCartIdForUpdate(con, userId, null);
+                    if (nowUserCartId == null) throw dup; // caso limite: rilancia
+                    mergeCarts(con, anonCartId, nowUserCartId);
+                    con.commit();
+                }
+            } catch (SQLException e) {
+                con.rollback();
+                throw e;
+            } finally {
+                con.setAutoCommit(true);
+            }
         }
     }
 
+    /** Ritorna l'id del carrello OPEN corrispondente e lo blocca con FOR UPDATE. */
+    private Integer selectOpenCartIdForUpdate(Connection con, Long userId, String sessionToken) throws SQLException {
+        if ((userId == null) == (sessionToken == null))
+            throw new IllegalArgumentException("Passa solo userId oppure solo sessionToken");
 
-    /** Merge del carrello anonimo nell’utente (se esiste). */
-    public void mergeAnonymousIntoUser(long userId, String sessionToken) throws SQLException {
-        if (sessionToken == null || sessionToken.isBlank()) return;
-        try (Connection con = ConPool.getConnection()) {
-            con.setAutoCommit(false);
+        final String sqlUser = "SELECT id FROM carts WHERE is_open=TRUE AND user_id=? FOR UPDATE";
+        final String sqlAnon = "SELECT id FROM carts WHERE is_open=TRUE AND user_id IS NULL AND session_token=? FOR UPDATE";
 
-            CartBean anon  = loadOpenCart(con, null, sessionToken);
-            CartBean userC = loadOpenCart(con, userId, null);
+        try (PreparedStatement ps = con.prepareStatement(userId != null ? sqlUser : sqlAnon)) {
+            if (userId != null) ps.setLong(1, userId);
+            else                ps.setString(1, sessionToken);
 
-            if (anon != null) {
-                if (userC == null) {
-                    attachAnonymousCartToUser(con, sessionToken, userId);
-                } else {
-                    mergeCarts(con, anon.getId(), userC.getId());
-                }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+                return null;
             }
-            con.commit();
         }
     }
 
@@ -162,7 +150,7 @@ public class CartDao {
 
             // 1) carica id carrello OPEN
             CartBean cart = loadOpenCart(con, userId, sessionToken);
-            if (cart == null || cart.getProducts().isEmpty()) {
+            if (cart == null || cart.getItems().isEmpty()) {
                 con.rollback();
                 return false; // niente da pagare
             }
@@ -293,7 +281,7 @@ public class CartDao {
 
                     CartItem item = new CartItem(p);
                     item.setQuantity(qty);
-                    cart.getProducts().add(item);
+                    cart.getItems().add(item);
                 }
 
                 return cart;
@@ -349,7 +337,7 @@ public class CartDao {
 
                     CartItem item = new CartItem(p);
                     item.setQuantity(qty);
-                    cart.getProducts().add(item);
+                    cart.getItems().add(item);
                 }
             }
         }

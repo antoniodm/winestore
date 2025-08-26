@@ -121,7 +121,7 @@ public class ProductDao {
                 p.setImagePath(rs.getString("image_path"));
                 p.setPrice(rs.getInt("price_cents"));
                 p.setStock(rs.getInt("stock"));
-                p.set_removed(rs.getBoolean("is_removed"));
+                p.setRemoved(rs.getBoolean("is_removed"));
                 products.add(p);
             }
             return products;
@@ -145,7 +145,7 @@ public class ProductDao {
                 p.setImagePath(rs.getString("image_path"));
                 p.setPrice(rs.getInt("price_cents"));
                 p.setStock(rs.getInt("stock"));
-                p.set_removed(rs.getBoolean("is_removed"));
+                p.setRemoved(rs.getBoolean("is_removed"));
                 products.add(p);
             }
             return products;
@@ -170,7 +170,7 @@ public class ProductDao {
             p.setImagePath(rs.getString("image_path"));
             p.setPrice(rs.getInt("price_cents"));
             p.setStock(rs.getInt("stock"));
-            p.set_removed(rs.getBoolean("is_removed"));
+            p.setRemoved(rs.getBoolean("is_removed"));
             return p;
         } catch (SQLException e) { throw new RuntimeException(e); }
     }
