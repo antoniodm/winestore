@@ -1,30 +1,32 @@
+// src/main/java/dao/ConPool.java
 package dao;
-import org.apache.tomcat.jdbc.pool.DataSource;
-import org.apache.tomcat.jdbc.pool.PoolProperties;
 
+import org.apache.tomcat.jdbc.pool.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.TimeZone;
 
-public class ConPool {
-    private static DataSource datasource;
+public final class ConPool {
+    private static volatile DataSource datasource;
+
+    private ConPool() { }
+
+    /** Chiamato una sola volta dal listener all’avvio. */
+    public static void configure(DataSource ds) {
+        ConPool.datasource = ds;
+    }
 
     public static Connection getConnection() throws SQLException {
         if (datasource == null) {
-            PoolProperties p = new PoolProperties();
-            p.setUrl("jdbc:mysql://localhost:3306/winestore?serverTimezone=" + TimeZone.getDefault().getID());
-            p.setDriverClassName("com.mysql.cj.jdbc.Driver");
-            p.setUsername("admin");
-            p.setPassword("password");
-            p.setMaxActive(100);
-            p.setInitialSize(10);
-            p.setMinIdle(10);
-            p.setRemoveAbandonedTimeout(60);
-            p.setRemoveAbandoned(true);
-            datasource = new DataSource();
-            datasource.setPoolProperties(p);
+            throw new IllegalStateException("ConPool non inizializzato: DataSource mancante.");
         }
         return datasource.getConnection();
     }
-}
 
+    /** Facoltativo (test, shutdown elegante). */
+    public static void shutdown() {
+        if (datasource != null) {
+            datasource.close();
+            datasource = null;
+        }
+    }
+}

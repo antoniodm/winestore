@@ -1,7 +1,5 @@
 package model;
 
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 import java.security.MessageDigest;
 import java.util.Base64;
 
