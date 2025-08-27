@@ -49,6 +49,11 @@ public class EditProductServlet extends HttpServlet {
         UserBean auth = (UserBean) session.getAttribute("authUser");
         boolean isAdmin = (auth != null && "admin".equals(auth.getUsername()));
 
+        if (!isAdmin) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+
         AuthUtil.Owner owner = AuthUtil.resolveOwner(request, response);
         boolean logged = owner.logged;
         Long   userId = owner.userId;

@@ -10,6 +10,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import model.ProductBean;
 
 import jakarta.servlet.http.*;
+import model.UserBean;
+
 import java.io.*;
 import java.nio.file.*;
 import java.io.IOException;
@@ -31,6 +33,12 @@ public class AddProductServlet extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
+
+        UserBean user = (UserBean) request.getSession().getAttribute("authUser");
+        if (user == null || !"admin".equals(user.getUsername())) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
 
         String name = request.getParameter("name");
         String description = request.getParameter("description");
@@ -84,6 +92,13 @@ public class AddProductServlet extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
+
+        UserBean user = (UserBean) request.getSession().getAttribute("authUser");
+        if (user == null || !"admin".equals(user.getUsername())) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+
         ProductDao productDao = new ProductDao();
         request.setAttribute("removedProducts", productDao.doRetrieveAllRemoved());
         request.getRequestDispatcher("/editproducts.jsp").forward(request, response);
