@@ -20,11 +20,13 @@ public class LoginServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
+
         String username = request.getParameter("username");
         String password = request.getParameter("password");
 
         if (username == null || username.isBlank() || password == null || password.isBlank()) {
-            response.setContentType("text/html;charset=UTF-8");
             request.setAttribute("loginError", "Username e password sono obbligatori.");
             RequestDispatcher dispatcher = request.getRequestDispatcher("/index.jsp");
             dispatcher.forward(request, response);
@@ -47,7 +49,6 @@ public class LoginServlet extends HttpServlet {
         }
 
         if (user == null || !password_hash.equals(user.getPasswordHash())) {
-            response.setContentType("text/html;charset=UTF-8");
             request.setAttribute("loginError", "Credenziali non valide.");
             RequestDispatcher dispatcher = request.getRequestDispatcher("/index.jsp");
             dispatcher.forward(request, response);

@@ -1,19 +1,4 @@
 'use strict';
-
-/* ============================================================================
- *  --------------------------------------------------------------------------
- *  Questo file gestisce:
- *    - refresh parziale del menu utente e del contenuto centrale
- *    - rendering del carrello (GET) e azioni sul carrello (POST)
- *    - gestione submit di form (aggiungi/rimuovi prodotto, registrazione)
- *    - delega di click sui pulsanti del carrello
- *
- *  Nota di progetto:
- *    - Nessuna dipendenza esterna.
- *    - Tutte le richieste sono marcate con 'X-Requested-With: XMLHttpRequest'
- *      per permettere al backend di distinguere le risposte parziali.
- * ============================================================================ */
-
 /**
  * Prefisso di contesto dell’app (es. '/shop'); se window.CTX non esiste, stringa vuota.
  * Mantiene compatibilità con ambienti dove CTX non è definito.
@@ -48,6 +33,8 @@ function swapSection(fromHtml, selector) {
     if (fresh && target) {
         target.innerHTML = fresh.innerHTML;
     } else {
+        console.warn("fromHtml: " + fromHtml + " selector: " + selector);
+        console.warn("fresh: " + fresh + "target: " + target);
         // Se non riusciamo a trovare la sezione, facciamo un fallback sicuro.
         window.location.reload();
     }
@@ -74,18 +61,27 @@ async function fetchText(url, options) {
  *  Refresh parziali (menu utente, contenuto pagina)
  * ---------------------------------------------------------------------------- */
 
-/**
- * Aggiorna la sezione #user_menu usando la versione “fresca” della pagina corrente.
- * Se la sezione non è reperibile, ricarica l’intera pagina.
- */
-async function refreshUserMenu() {
-    const { text } = await fetchText(window.location.href, {
-        credentials: 'same-origin',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    });
-    swapSection(text, '#user_menu');
-}
+async function reloadUserMenu() {
+    const panel = document.getElementById('left_bar'); // ok: è il contenitore del menu
+    if (!panel) return;
 
+    try {
+        const res = await fetch(CTX + '/user_menu', {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!res.ok) {
+            console.error("Errore caricando /user_menu:", res.status);
+            return;
+        }
+
+        const html = await res.text();
+        panel.innerHTML = html; // sostituisco il frammento
+    } catch (err) {
+        console.error("Errore di rete:", err);
+    }
+}
 /**
  * Aggiorna la sezione #content usando la versione “fresca” della pagina corrente.
  * Se la sezione non è reperibile, ricarica l’intera pagina.
@@ -107,7 +103,6 @@ async function refreshContent() {
  * In caso di errore HTTP mostra un messaggio nel pannello.
  */
 async function renderCart() {
-    alert("renderCart");
     const panel = document.getElementById('cart_panel');
     if (!panel) return; // la pagina potrebbe non avere il carrello
 
@@ -135,7 +130,6 @@ async function renderClosedCart() {
     const panel = document.getElementById('dynamic_content');
 
     if (!panel) {
-        alert("renderClosedCart !panel");
         return;
     } // la pagina potrebbe non avere il carrello
 
@@ -149,13 +143,11 @@ async function renderClosedCart() {
         });
 
         if (!ok) {
-            alert(status);
             // panel.innerHTML = `<div class="cart-error">Errore ${status} caricando il carrello: ${error_msg}.</div>`;
         }
 
         panel.innerHTML = text;
     } catch (e) {
-        alert(e.text);
         panel.innerHTML = `<div class="cart-error">Errore di rete: ${e}</div>`;
     }
 }
@@ -168,7 +160,6 @@ async function renderClosedCart() {
 async function postCart(bodyObj) {
     const panel = document.getElementById('cart_panel');
     if (!panel) {
-        alert("no element cart_panel");
         return;
     }
 
@@ -187,10 +178,9 @@ async function postCart(bodyObj) {
         panel.innerHTML = text;
 
         // Mantieni allineata la UI (es. badge carrello, totali nel content, ecc.).
-        await refreshUserMenu();
+        await reloadUserMenu();
     } catch (e) {
         // panel.innerHTML = `<div class="cart-error">Errore di rete: ${e}</div>`;
-        alert("e.text");
     }
 }
 
@@ -199,7 +189,7 @@ async function postCart(bodyObj) {
  * ---------------------------------------------------------------------------- */
 
 function attachUserMenuClickHandler(){
-    const content = document.getElementById('user_menu');
+    const content = document.getElementById('left_bar');
     if (!content) return;
 
     content.addEventListener('click', (e) => {
@@ -207,10 +197,10 @@ function attachUserMenuClickHandler(){
         if (target) {
             e.preventDefault();
             renderClosedCart();
+        } else {
         }
     });
 }
-//renderClosedCart
 
 /**
  * Gestione submit nel contenitore #content per:
@@ -315,13 +305,8 @@ function attachCartClickHandler() {
 
         const id = btn.getAttribute('data-id');
 
-        if (!isAdd && !isRem && !isReset && !isBuy) {
-            alert("Empty action");
-        }
-
         // id obbligatorio solo per add/remove
         if ((isAdd || isRem) && !id) {
-            alert("((isAdd || isRem) && !id)");
             return;
         }
 

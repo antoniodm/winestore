@@ -238,3 +238,34 @@ img { max-width: 100%; height: auto; border-radius: 8px; } /* immagini fluide */
     #nav-toggle { display: inline-block; margin: 8px 16px; } /* mostra bottone hamburger */
     #menu a { padding: 10px 12px; } /* link più comodi da cliccare */
 }
+
+
+
+
+/* Old cart */
+/* Intestazioni tabella */
+.cart-table th {
+    background-color: #f0f0f0;
+    text-align: center;
+    padding: 8px;
+    border: 1px solid #ccc;
+}
+
+/* Celle tabella */
+.cart-table td {
+    padding: 8px;
+    border: 1px solid #ccc;
+    text-align: right; /* allinea a destra i valori */
+}
+
+/* Prima colonna (nome prodotto) a sinistra */
+.cart-table td:first-child {
+    text-align: left;
+}
+
+/* Totale carrello */
+.cart-total {
+    font-weight: bold;
+    text-align: right;
+    margin-top: 8px;
+}

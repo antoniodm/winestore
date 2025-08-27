@@ -1,3 +1,5 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
         <h3>SHOP</h3>
 
@@ -11,7 +13,7 @@
                                         Name: ${p.name}<br>
                                         Description: ${p.description}<br>
                                         Manufacturer: ${p.manufacturer}<br>
-                                        Price: ${p.price}<br>
+                                        Price: ${p.price / 100} &euro;<br>
                                         Stock: ${p.stock}<br>
 
                                         <c:if test="${not empty p.imagePath}">

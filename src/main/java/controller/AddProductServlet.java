@@ -29,7 +29,7 @@ public class AddProductServlet extends HttpServlet {
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
+        response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
 
         String name = request.getParameter("name");
@@ -82,7 +82,8 @@ public class AddProductServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
+        response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
         ProductDao productDao = new ProductDao();
         request.setAttribute("removedProducts", productDao.doRetrieveAllRemoved());
         request.getRequestDispatcher("/editproducts.jsp").forward(request, response);

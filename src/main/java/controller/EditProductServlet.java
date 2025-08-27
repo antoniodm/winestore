@@ -42,6 +42,8 @@ public class EditProductServlet extends HttpServlet {
         boolean isUpdate    = "/product/update".equals(servletPath);
         boolean isResurrect = "/product/resurrect".equals(servletPath);
 
+        response.setContentType("text/html;charset=UTF-8");
+
         // --- Controllo admin (come da corso: ruoli diversi) ---
         HttpSession session = request.getSession(true);
         UserBean auth = (UserBean) session.getAttribute("authUser");

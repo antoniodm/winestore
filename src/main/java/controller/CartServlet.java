@@ -19,8 +19,9 @@ public class CartServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        System.out.println("CartServlet doPost");
+
         response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
 
         AuthUtil.Owner owner = AuthUtil.resolveOwner(request, response);
         boolean logged = owner.logged;
@@ -120,8 +121,9 @@ public class CartServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        System.out.println("CartServlet doGet");
+
         response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
 
         AuthUtil.Owner owner = AuthUtil.resolveOwner(request, response);
         boolean logged = owner.logged;

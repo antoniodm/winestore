@@ -1,3 +1,5 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+
 <h3>CLOSED CART</h3>
 <div id="closed_carts">
 
@@ -11,7 +13,7 @@
         <c:when test="${not empty closed_carts}">
             <c:forEach var="cart" items="${closed_carts}">
                 <div class="cart">
-                    <h3>Carrello #${cart.id}</h3>
+                    <h3>Carrello id: ${cart.id}</h3>
 
                     <c:if test="${empty cart.items}">
                         <p>Carrello vuoto.</p>
@@ -38,7 +40,7 @@
                             </c:forEach>
                             </tbody>
                         </table>
-                        <p class="cart-total">Totale carrello: ${cart.totalCents}</p>
+                        <p class="cart-total">Totale carrello: ${cart.totalCents / 100} &euro;</p>
                     </c:if>
                 </div>
             </c:forEach>
