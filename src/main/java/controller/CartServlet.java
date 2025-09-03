@@ -100,20 +100,17 @@ public class CartServlet extends HttpServlet {
             }
             session.setAttribute("closed_carts", closed_carts);
             request.setAttribute("cart_message", error_message.toString());
-            System.out.println("END CHECKOIUT");
-            System.out.println("2");
+
             request.getRequestDispatcher("/WEB-INF/fragments/cart.jsp").forward(request, response);
 
         } catch (SQLIntegrityConstraintViolationException e) {
             // p.es. conflitti di vincoli/duplicati
             response.setStatus(HttpServletResponse.SC_CONFLICT); // 409
             request.setAttribute("cart_message", "Operazione non valida");
-            System.out.println("3");
             request.getRequestDispatcher("/WEB-INF/fragments/cart.jsp").forward(request, response);
         } catch (SQLException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500
             request.setAttribute("cart_message", "Errore interno carrello");
-            System.out.println("4");
             request.getRequestDispatcher("/WEB-INF/fragments/cart.jsp").forward(request, response);
         }
     }

@@ -36,7 +36,9 @@ public class AddProductServlet extends HttpServlet {
 
         UserBean user = (UserBean) request.getSession().getAttribute("authUser");
         if (user == null || !"admin".equals(user.getUsername())) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            // response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            request.setAttribute("error_message","Non sei admin.");
+            request.getRequestDispatcher("/WEB-INF/fragments/error.jsp").forward(request, response);
             return;
         }
 
@@ -44,8 +46,18 @@ public class AddProductServlet extends HttpServlet {
         String description = request.getParameter("description");
         String origin = request.getParameter("origin");
         String manufacturer = request.getParameter("manufacturer");
-        int price = Integer.parseInt(request.getParameter("price_cents"));
-        int stock = Integer.parseInt(request.getParameter("stock"));
+        int price = 0;
+        int stock = 0;
+
+        try {
+            price = Integer.parseInt(request.getParameter("price_cents"));
+            stock = Integer.parseInt(request.getParameter("stock"));
+            if (price <= 0 || stock < 0) throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            request.setAttribute("error_message","Valori numerici non validi.");
+            request.getRequestDispatcher("/WEB-INF/fragments/error.jsp").forward(request, response);
+            return;
+        }
 
         // upload opzionale
         Part imagePart = request.getPart("image");
@@ -54,7 +66,8 @@ public class AddProductServlet extends HttpServlet {
         if (imagePart != null && imagePart.getSize() > 0) {
             String mime = imagePart.getContentType();
             if (mime == null || !(mime.startsWith("image/"))) {
-                response.sendError(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, "Formato immagine non valido");
+                request.setAttribute("error_message","Formato immagine non supportato.");
+                request.getRequestDispatcher("/WEB-INF/fragments/error.jsp").forward(request, response);
                 return;
             }
 
@@ -95,7 +108,9 @@ public class AddProductServlet extends HttpServlet {
 
         UserBean user = (UserBean) request.getSession().getAttribute("authUser");
         if (user == null || !"admin".equals(user.getUsername())) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            // response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            request.setAttribute("error_message","Non sei admin.");
+            request.getRequestDispatcher("/WEB-INF/fragments/error.jsp").forward(request, response);
             return;
         }
 

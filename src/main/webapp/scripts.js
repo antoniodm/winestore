@@ -246,8 +246,9 @@ function attachContentSubmitHandler() {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
                 const html = await res.text();
-                // Rimpiazza l’intero #content con quanto restituito (listing, messaggi, ecc.)
+
                 content.innerHTML = html;
+
                 if (submitId === 'del_prod_btn') {
                     renderCart();
                 }

@@ -1,0 +1,9 @@
+tomcat vuole il classico keystore:
+keytool -genkeypair -alias tomcat -keyalg RSA -keystore keystore.jks -keysize 2048
+
+in tomcat nel file server.xml aggiungere la configurazione:
+<Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+           maxThreads="150" SSLEnabled="true" scheme="https" secure="true"
+           clientAuth="false" sslProtocol="TLS"
+           keystoreFile="/etc....."
+           keystorePass="Password" />

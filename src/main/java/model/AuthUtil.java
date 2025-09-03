@@ -3,6 +3,7 @@ package model;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Cookie;
 
 public final class AuthUtil {
     public static final class Owner {
@@ -30,9 +31,11 @@ public final class AuthUtil {
             token = java.util.UUID.randomUUID().toString();
             s.setAttribute("guestToken", token);
             // opzionale: cookie per persistenza oltre sessione
-            jakarta.servlet.http.Cookie c = new jakarta.servlet.http.Cookie("guestToken", token);
+            Cookie c = new Cookie("guestToken", token);
             c.setPath(req.getContextPath().isEmpty() ? "/" : req.getContextPath());
             c.setMaxAge(60 * 60 * 24 * 7); // 7 giorni
+            c.setHttpOnly(true);
+            c.setSecure(true);
             res.addCookie(c);
         }
         s.setAttribute("logged", Boolean.FALSE);

@@ -49,9 +49,8 @@ public class LoginServlet extends HttpServlet {
         }
 
         if (user == null || !password_hash.equals(user.getPasswordHash())) {
-            request.setAttribute("loginError", "Credenziali non valide.");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("/index.jsp");
-            dispatcher.forward(request, response);
+            request.setAttribute("error_message", "Credenziali non valide.");
+            request.getRequestDispatcher("/error.jsp").forward(request, response);
             return;
         }
 

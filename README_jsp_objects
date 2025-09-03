@@ -1,0 +1,45 @@
++-----------------------------+----------------------------+-------------------------------------------------------------+
+| OGGETTO (Scope)            | SCOPO                      | METODI PRINCIPALI (con descrizione)                        |
++-----------------------------+----------------------------+-------------------------------------------------------------+
+| request (scope: request)   | Richiesta HTTP del client  | getParameter(name): valore di un parametro di input        |
+| (HttpServletRequest)       |                            | getAttribute(name): recupera un attributo                   |
+|                             |                            | setAttribute(name, obj): imposta un attributo              |
+|                             |                            | getHeader(name): valore di un header HTTP                  |
+|                             |                            | getCookies(): array di cookie ricevuti                     |
+|                             |                            | getSession(): accede alla sessione utente                  |
++-----------------------------+----------------------------+-------------------------------------------------------------+
+| response (scope: page)     | Risposta HTTP al client    | setContentType(type): imposta tipo contenuto               |
+| (HttpServletResponse)      |                            | sendRedirect(url): reindirizza il browser                  |
+|                             |                            | addCookie(cookie): aggiunge cookie alla risposta           |
+|                             |                            | getWriter(): stampa testo HTML                             |
++-----------------------------+----------------------------+-------------------------------------------------------------+
+| session (scope: session)   | Stato tra richieste client | setAttribute(name, obj): salva dato utente                 |
+| (HttpSession)              |                            | getAttribute(name): recupera dato                          |
+|                             |                            | invalidate(): invalida sessione                            |
+|                             |                            | getId(): ID sessione                                        |
+|                             |                            | isNew(): true se è una nuova sessione                      |
++-----------------------------+----------------------------+-------------------------------------------------------------+
+| application (scope: app)   | Dati globali della webapp  | setAttribute(name, obj): salva dato globale                |
+| (ServletContext)           |                            | getAttribute(name): recupera dato globale                  |
+|                             |                            | getRealPath(path): path assoluto risorsa                   |
+|                             |                            | getResourceAsStream(path): stream da risorsa               |
++-----------------------------+----------------------------+-------------------------------------------------------------+
+| out (scope: page)          | Output HTML                | print(val): stampa valore                                  |
+| (JspWriter)                |                            | println(val): stampa con newline                           |
+|                             |                            | flush(): svuota buffer                                     |
+|                             |                            | clear(): resetta buffer                                    |
++-----------------------------+----------------------------+-------------------------------------------------------------+
+| page (scope: page)         | Riferimento alla JSP stessa| Equivalente a “this”                                       |
+| (Object)                   |                            |                                                            |
++-----------------------------+----------------------------+-------------------------------------------------------------+
+| pageContext (scope: page)  | Gestione contesti          | setAttribute(name, obj, scope): salva in uno scope         |
+| (PageContext)              |                            | getAttribute(name, scope): recupera da uno scope           |
+|                             |                            | findAttribute(name): cerca in tutti gli scope              |
+|                             |                            | include(url): include un file                              |
++-----------------------------+----------------------------+-------------------------------------------------------------+
+| config (scope: page)       | Parametri inizializzazione | getInitParameter(name): valore da web.xml                  |
+| (ServletConfig)            | della servlet              | getServletName(): nome servlet                             |
++-----------------------------+----------------------------+-------------------------------------------------------------+
+| exception (scope: page)    | Eccezioni in error page    | getMessage(): messaggio errore                             |
+| (Throwable)                |                            | printStackTrace(): stampa stack trace                      |
++-----------------------------+----------------------------+-------------------------------------------------------------+
