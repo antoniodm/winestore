@@ -43,11 +43,11 @@ public class UserDao {
         } catch (SQLException e) { throw new RuntimeException(e); }
     }
 
-    public UserBean doRetrieveById(int id) {
+    public UserBean doRetrieveById(Long id) {
         try (Connection con = ConPool.getConnection()) {
             PreparedStatement ps =
                     con.prepareStatement("SELECT username,email,name, surname, address, birth_date, money FROM users WHERE id=?");
-            ps.setInt(1, id);
+            ps.setLong(1, id);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 UserBean p = new UserBean();

@@ -1,4 +1,8 @@
 <header>
+<div id="last_purchase">
+<span id="last-purchase"></span>
+</div>
+
   <div id="banner">
     <h1>Find the best wine ever!!!</h1>
   </div>
@@ -15,5 +19,7 @@
     <span style="${sessionScope.logged and not empty sessionScope.authUser ? 'display:none' : ''}">
   <a href="${pageContext.request.contextPath}/login.jsp">Login</a> |
   <a href="${pageContext.request.contextPath}/signin.jsp">Registrati</a>
-</span>  </div>
+</span>
+
+</div>
 </header>

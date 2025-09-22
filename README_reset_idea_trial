@@ -1,0 +1,4 @@
+product="IntelliJIdea"
+rm -rf ~/.config/JetBrains/$product*/eval 2> /dev/null
+sed -i 's/evlsprt//' ~/.config/JetBrains/$product*/options/other.xml 2> /dev/null
+rm -rf ~/.java/.userPrefs 2> /dev/null

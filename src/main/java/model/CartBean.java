@@ -1,20 +1,25 @@
 package model;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
+import java.time.*;
 
 
 public class CartBean {
     private Integer id;            // carts.id (INT UNSIGNED)
     private Long userId;           // carts.user_id (BIGINT) se loggato
     private String sessionToken;   // carts.session_token se anonimo
+    private Timestamp ts;
     private CartStatus status = CartStatus.OPEN;
     public enum CartStatus { OPEN, CLOSED }
-    private final List<CartItem> items = new ArrayList<>();
+    private List<CartItem> items = new ArrayList<>();
 
     // --- Meta ---
+    public Timestamp getTs() {return ts;}
+    public void setTs(Timestamp ts) {this.ts = ts;}
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
@@ -29,6 +34,9 @@ public class CartBean {
 
     // --- Items ---
     public List<CartItem> getItems() { return items; }
+    public void setItems(List<CartItem> items) {
+        this.items = items;
+    }
 
     public void addProduct(ProductBean product) {
         for (CartItem item : items) {

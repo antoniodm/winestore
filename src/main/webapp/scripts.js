@@ -184,6 +184,28 @@ async function postCart(bodyObj) {
     }
 }
 
+
+async function updateLastPurchase() {
+  try {
+    const r = await fetch(`${window.CTX || ''}/last-sell`, {
+      headers: { 'Accept': 'application/json' }
+    });
+    const data = await r.json();
+
+    const el = document.getElementById('last-purchase');
+    if (!el) return;
+
+    if (data.error) {
+      el.textContent = "Nessun acquisto registrato";
+    } else {
+      el.textContent = `Ultimo acquisto effettuato da ${data.name} il ${data.date}`;
+    }
+  } catch (e) {
+    console.error("Errore fetch last-sell", e);
+  }
+}
+
+
 /* ----------------------------------------------------------------------------
  *  Event wiring (submit & click delegation)
  * ---------------------------------------------------------------------------- */
@@ -325,7 +347,8 @@ function attachCartClickHandler() {
 /* ----------------------------------------------------------------------------
  *  Bootstrap
  * ---------------------------------------------------------------------------- */
-
+document.addEventListener('DOMContentLoaded', updateLastPurchase);
+setInterval(updateLastPurchase, 5000);
 document.addEventListener('DOMContentLoaded', () => {
     // 2) Wiring degli handler su #content (submit) e su document (click carrello).
     attachContentSubmitHandler();

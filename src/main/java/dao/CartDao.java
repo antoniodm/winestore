@@ -58,6 +58,29 @@ public class CartDao {
         }
     }
 
+    public CartBean retrieveLastClosedCart() throws SQLException {
+        String sql = "SELECT * FROM carts WHERE is_open = FALSE ORDER BY created_at DESC, id DESC LIMIT 1;";
+        try (Connection con = ConPool.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    System.out.println("id: " + rs.getInt("id"));
+                    System.out.println("Uid: " + rs.getLong("user_id"));
+                    System.out.println("open: " + rs.getBoolean("is_open"));
+                    System.out.println("ts: " + rs.getTimestamp("created_at"));
+
+                    CartBean c = new CartBean();
+                    c.setId(rs.getInt("id"));
+                    c.setUserId(rs.getLong("user_id"));
+                    c.setStatus(rs.getBoolean("is_open") ? CartBean.CartStatus.OPEN : CartBean.CartStatus.CLOSED);
+                    c.setTs(rs.getTimestamp("created_at"));
+                    return c;
+                }
+            }
+        }
+        return null; // Nessun carrello chiuso trovato
+    }
 
     /** Svuota il carrello OPEN dell’owner. */
     public void clearOpenCart(Long userId, String sessionToken) throws SQLException {

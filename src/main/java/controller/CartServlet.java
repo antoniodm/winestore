@@ -9,6 +9,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
@@ -65,7 +68,6 @@ public class CartServlet extends HttpServlet {
                     if (!logged) {
                         error_message.append("Devi essere loggato");
                         request.setAttribute("cart_message", error_message.toString());
-                        System.out.println("ciao 1 ");
                         request.getRequestDispatcher("/WEB-INF/fragments/cart.jsp").forward(request, response);
                         return;
                     }
@@ -80,6 +82,18 @@ public class CartServlet extends HttpServlet {
                                 user.setMoney(user_money - before.getTotalCents());
                             }
                             error_message.append("Ordine completato");
+
+
+                        LocalDateTime now = LocalDateTime.now();
+                        String when = now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+                        java.util.Map<String,Object> last = new java.util.HashMap<>();
+                        last.put("name", user.getName());
+                        last.put("date", when);
+                        var ctx = request.getServletContext();
+                        synchronized (ctx) {
+                            ctx.setAttribute("lastPurchase", last);
+                        }
+
                     } else {
                             response.setStatus(409);
                             error_message.append("Disponibilità insufficiente.");
@@ -119,8 +133,7 @@ public class CartServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        response.setContentType("text/html;charset=UTF-8");
-        request.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json;charset=UTF-8");
 
         AuthUtil.Owner owner = AuthUtil.resolveOwner(request, response);
         boolean logged = owner.logged;
